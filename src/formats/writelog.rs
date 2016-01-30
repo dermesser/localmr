@@ -126,6 +126,27 @@ impl WriteLogReader {
             .map(move |f| WriteLogReader::new(Box::new(f)))
     }
 
+    /// Opens all files from a directory which end in suffix, and chains them together.
+    pub fn new_from_dir(path: &String, suffix: &String) -> io::Result<WriteLogReader> {
+        let mut reader: Box<Read> = Box::new(io::empty());
+        let dir = try!(fs::read_dir(path));
+
+        for entry in dir {
+            let name;
+            match entry {
+                Err(e) => { println!("Error opening {}: {}", path, e); continue },
+                Ok(direntry) => name = direntry.path()
+            }
+            if name.ends_with(suffix) {
+                match fs::OpenOptions::new().read(true).open(name.clone()) {
+                    Err(e) => { println!("Error opening {:?}: {}", name, e); continue },
+                    Ok(f) => reader = Box::new(reader.chain(f))
+                }
+            }
+        }
+        Ok(WriteLogReader{ src: reader, records_read: 0, bytes_read: 0 })
+    }
+
     pub fn get_stats(&self) -> (u32, usize) {
         (self.records_read, self.bytes_read)
     }

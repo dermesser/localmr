@@ -1,4 +1,3 @@
-use std::convert::From;
 use mapreducer::Record;
 use std::fmt;
 
