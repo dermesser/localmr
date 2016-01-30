@@ -2,3 +2,6 @@
 name = "localmr"
 version = "0.1.0"
 authors = ["Lewin Bormann <lbo@spheniscida.de>"]
+
+[dependencies]
+time = "0.1.34"

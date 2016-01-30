@@ -3,7 +3,8 @@ use std::fmt;
 
 /// Transforms an iterator<string> into an iterator<Record>. It yields
 /// records with the key being the position of the current record, starting with
-/// 1.
+/// 1. Mainly used as input iterator in the mapping phase, from sources that only
+/// yield values (no keys).
 pub struct RecordIterator {
     i: Box<Iterator<Item=String>>,
     counter: u64,

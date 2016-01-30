@@ -19,9 +19,7 @@ use util::{RecordIterator};
 /// that is a sequence of bytestring.
 /// It can be read back in relatively efficiently and yields the same byte
 /// strings; on disk, it is represented as records prefixed by 4 byte
-/// big-endian length prefixes:
-/// 
-///      llllbbbbbbllllbbllllbbbbbbbbb...
+/// big-endian length prefixes: `llllbbbbbbllllbbllllbbbbbbbbb...`
 /// 
 /// Where l is a length byte and b are bytes of a bytestring.
 /// 
