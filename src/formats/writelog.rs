@@ -7,6 +7,9 @@ use std::fs;
 use std::vec;
 use std::string;
 
+use mapreducer::{Record};
+use util::{RecordIterator};
+
 /// A length-prefixed record stream named for the original use case,
 /// which was to write a log of all write operations to a database.
 ///
@@ -201,10 +204,15 @@ impl WriteLogReader {
     }
 }
 
-impl Iterator for WriteLogReader {
+/// Iterator type for WriteLogReader; used to implement IntoIterator
+struct WLRIteratorAdapter {
+    wlr: WriteLogReader,
+}
+
+impl Iterator for WLRIteratorAdapter {
     type Item = String;
     fn next(&mut self) -> Option<String> {
-        let result = self.read_vec();
+        let result = self.wlr.read_vec();
         let convert_result;
 
         match result {
@@ -219,19 +227,13 @@ impl Iterator for WriteLogReader {
     }
 }
 
-// Byte string implementation.
-/*
-impl Iterator for WriteLogReader {
-    type Item = vec::Vec<u8>;
-    fn next(&mut self) -> Option<vec::Vec<u8>> {
-        let result = self.read_vec();
-        match result {
-            Err(_) => None,
-            Ok(v) => Some(v)
-        }
+impl IntoIterator for WriteLogReader {
+    type Item = Record;
+    type IntoIter = RecordIterator;
+    fn into_iter(self) -> RecordIterator {
+        RecordIterator::new(Box::new(WLRIteratorAdapter{ wlr: self }))
     }
 }
-*/
 
 impl Read for WriteLogReader {
     fn read(&mut self, dst: &mut [u8]) -> io::Result<usize> {

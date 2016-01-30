@@ -10,7 +10,7 @@ pub struct RecordIterator {
 }
 
 impl RecordIterator {
-    fn new(it: Box<Iterator<Item=String>>) -> RecordIterator {
+    pub fn new(it: Box<Iterator<Item=String>>) -> RecordIterator {
         RecordIterator { i: it, counter: 0 }
     }
 }
