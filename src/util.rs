@@ -5,18 +5,18 @@ use std::fmt;
 /// records with the key being the position of the current record, starting with
 /// 1. Mainly used as input iterator in the mapping phase, from sources that only
 /// yield values (no keys).
-pub struct RecordIterator {
-    i: Box<Iterator<Item=String>>,
+pub struct RecordIterator<I: Iterator<Item=String>> {
+    i: I,
     counter: u64,
 }
 
-impl RecordIterator {
-    pub fn new(it: Box<Iterator<Item=String>>) -> RecordIterator {
+impl<I: Iterator<Item=String>> RecordIterator<I> {
+    pub fn new(it: I) -> RecordIterator<I> {
         RecordIterator { i: it, counter: 0 }
     }
 }
 
-impl Iterator for RecordIterator {
+impl<I: Iterator<Item=String>> Iterator for RecordIterator<I> {
     type Item = Record;
     fn next(&mut self) -> Option<Record> {
         match self.i.next() {

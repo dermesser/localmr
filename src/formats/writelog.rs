@@ -203,11 +203,11 @@ impl WriteLogReader {
 }
 
 /// Iterator type for WriteLogReader; used to implement IntoIterator
-struct WLRIteratorAdapter {
+pub struct IntoIter {
     wlr: WriteLogReader,
 }
 
-impl Iterator for WLRIteratorAdapter {
+impl Iterator for IntoIter {
     type Item = String;
     fn next(&mut self) -> Option<String> {
         let result = self.wlr.read_vec();
@@ -227,9 +227,9 @@ impl Iterator for WLRIteratorAdapter {
 
 impl IntoIterator for WriteLogReader {
     type Item = Record;
-    type IntoIter = RecordIterator;
-    fn into_iter(self) -> RecordIterator {
-        RecordIterator::new(Box::new(WLRIteratorAdapter{ wlr: self }))
+    type IntoIter = RecordIterator<IntoIter>;
+    fn into_iter(self) -> Self::IntoIter {
+        RecordIterator::new(IntoIter{ wlr: self })
     }
 }
 
