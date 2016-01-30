@@ -5,6 +5,7 @@ use std::boxed::Box;
 use std::io;
 use std::fs;
 use std::vec;
+use std::string;
 
 /// A length-prefixed record stream named for the original use case,
 /// which was to write a log of all write operations to a database.
@@ -178,6 +179,38 @@ impl WriteLogReader {
         }
     }
 }
+
+impl Iterator for WriteLogReader {
+    type Item = String;
+    fn next(&mut self) -> Option<String> {
+        let result = self.read_vec();
+        let convert_result;
+
+        match result {
+            Err(_) => return None,
+            Ok(v) => convert_result = string::String::from_utf8(v)
+        }
+
+        match convert_result {
+            Err(_) => None,
+            Ok(s) => Some(s)
+        }
+    }
+}
+
+// Byte string implementation.
+/*
+impl Iterator for WriteLogReader {
+    type Item = vec::Vec<u8>;
+    fn next(&mut self) -> Option<vec::Vec<u8>> {
+        let result = self.read_vec();
+        match result {
+            Err(_) => None,
+            Ok(v) => Some(v)
+        }
+    }
+}
+*/
 
 impl Read for WriteLogReader {
     fn read(&mut self, dst: &mut [u8]) -> io::Result<usize> {
