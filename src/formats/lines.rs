@@ -90,6 +90,13 @@ pub struct LinesWriter {
     file: fs::File,
 }
 
+impl LinesWriter {
+    pub fn new_to_file(path: &String) -> io::Result<LinesWriter> {
+        let f = try!(fs::OpenOptions::new().write(true).create(true).truncate(true).open(path));
+        Ok(LinesWriter { file: f })
+    }
+}
+
 impl io::Write for LinesWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.file.write(buf).and(self.file.write(&['\n' as u8]))
@@ -155,8 +162,8 @@ mod test {
         let mut gen = lines::LinesSinkGenerator::new(&String::from("test_output_"));
         let mut f = gen.new_output(&String::from("1"));
 
-        for i in 0..10 {
-            f.write(line.as_bytes());
+        for _ in 0..10 {
+            let _ = f.write(line.as_bytes());
         }
 
         {
@@ -169,6 +176,6 @@ mod test {
                            .len(),
                        200);
         }
-        fs::remove_file("test_output_1");
+        let _ = fs::remove_file("test_output_1");
     }
 }

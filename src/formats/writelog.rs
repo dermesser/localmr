@@ -359,7 +359,7 @@ mod test {
                 }
             }
         }
-        fs::remove_file(filename);
+        let _ = fs::remove_file(filename);
     }
 
     extern crate time;
