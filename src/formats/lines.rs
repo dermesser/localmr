@@ -71,6 +71,8 @@ impl<Src: Read> Iterator for LinesReader<Src> {
     }
 }
 
+/// An MRSinkGenerator type that uses a simple path as base
+/// and creates text files based on it.
 pub struct LinesSinkGenerator {
     basepath: String,
 }
@@ -83,6 +85,7 @@ impl LinesSinkGenerator {
     }
 }
 
+/// Writer that separates the chunks written by '\n' characters.
 pub struct LinesWriter {
     file: fs::File,
 }

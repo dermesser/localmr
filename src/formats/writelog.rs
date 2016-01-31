@@ -12,6 +12,7 @@ use std::string;
 
 use mapreducer::Record;
 use formats::util::RecordIterator;
+use formats::util::MRSinkGenerator;
 
 /// A length-prefixed record stream named for the original use case,
 /// which was to write a log of all write operations to a database.
@@ -103,6 +104,29 @@ impl Write for WriteLogWriter {
 
     fn flush(&mut self) -> Result<()> {
         self.dest.flush()
+    }
+}
+
+pub struct WriteLogGenerator {
+    base: String,
+}
+
+impl WriteLogGenerator {
+    pub fn new(base: &String) -> WriteLogGenerator {
+        WriteLogGenerator { base: base.clone() }
+    }
+}
+
+impl MRSinkGenerator for WriteLogGenerator {
+    type Sink = WriteLogWriter;
+    fn new_output(&mut self, suffix: &String) -> Self::Sink {
+        let mut path = self.base.clone();
+        path.push_str(&suffix[..]);
+        let writer = WriteLogWriter::new_to_file(&path, false);
+        match writer {
+            Err(e) => panic!("Could not open {}: {}", path, e),
+            Ok(w) => w
+        }
     }
 }
 
