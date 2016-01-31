@@ -90,9 +90,9 @@ pub trait MapReducer: Clone {
     /// Determines how to map keys to (reduce) shards.
     /// Returns a number in [0; n) determining the shard the key belongs in.
     /// The default implementation uses a simple hash (SipHasher) and modulo.
-    fn shard(n: u32, key: &String) -> u32 {
+    fn shard(&self, n: usize, key: &String) -> usize {
         let mut h = SipHasher::new();
         h.write(key.as_bytes());
-        h.finish() as u32 % n
+        h.finish() as usize % n
     }
 }
