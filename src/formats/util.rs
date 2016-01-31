@@ -1,7 +1,9 @@
 //! Various iterators/adapters used for input/output formats.
 
+
 use mapreducer::Record;
 use std::fmt;
+use std::io;
 
 /// Transforms an iterator<string> into an iterator<Record>. It yields
 /// records with the key being the position of the current record, starting with
@@ -35,4 +37,14 @@ impl<I: Iterator<Item = String>> Iterator for RecordIterator<I> {
             }
         }
     }
+}
+
+/// A type implementing MRSinkGenerator is used at the end of the reducer
+/// phase to write the output. Given a name, new() should return a new object
+/// that can be used to write the output of a reduce partition.
+/// Values are always written as a whole to the writer.
+pub trait MRSinkGenerator {
+    type Sink: io::Write + Sized;
+    /// Return a new output.
+    fn new_output(&mut self, name: &String) -> Self::Sink;
 }
