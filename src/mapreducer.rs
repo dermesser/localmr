@@ -9,7 +9,7 @@ pub struct Record {
 /// Input to a reducer function.
 pub struct MultiRecord {
     key: String,
-    value: Box<Iterator<Item=String>>,
+    value: Box<Iterator<Item = String>>,
 }
 
 impl MultiRecord {
@@ -37,9 +37,14 @@ impl MEmitter {
         MEmitter { r: LinkedList::new() }
     }
     pub fn emit(&mut self, key: String, val: String) {
-        self.r.push_back(Record { key: key, value: val })
+        self.r.push_back(Record {
+            key: key,
+            value: val,
+        })
     }
-    pub fn _get(self) -> LinkedList<Record> { self.r }
+    pub fn _get(self) -> LinkedList<Record> {
+        self.r
+    }
 }
 
 pub struct REmitter {
@@ -53,7 +58,9 @@ impl REmitter {
     pub fn emit(&mut self, val: String) {
         self.r.push_back(val)
     }
-    pub fn _get(self) -> LinkedList<String> { self.r }
+    pub fn _get(self) -> LinkedList<String> {
+        self.r
+    }
 }
 
 pub type MapperF = fn(&mut MEmitter, Record);
@@ -66,4 +73,3 @@ pub trait MapReducer: Clone {
     fn map(&self, em: &mut MEmitter, record: Record);
     fn reduce(&self, em: &mut REmitter, records: MultiRecord);
 }
-

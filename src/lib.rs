@@ -3,5 +3,4 @@ pub mod formats;
 pub mod mapreducer;
 
 #[test]
-fn it_works() {
-}
+fn it_works() {}

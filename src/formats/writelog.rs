@@ -135,17 +135,27 @@ impl WriteLogReader {
         for entry in dir {
             let name;
             match entry {
-                Err(e) => { println!("Error opening {}: {}", path, e); continue },
-                Ok(direntry) => name = direntry.path()
+                Err(e) => {
+                    println!("Error opening {}: {}", path, e);
+                    continue;
+                }
+                Ok(direntry) => name = direntry.path(),
             }
             if name.ends_with(suffix) {
                 match fs::OpenOptions::new().read(true).open(name.clone()) {
-                    Err(e) => { println!("Error opening {:?}: {}", name, e); continue },
-                    Ok(f) => reader = Box::new(reader.chain(f))
+                    Err(e) => {
+                        println!("Error opening {:?}: {}", name, e);
+                        continue;
+                    }
+                    Ok(f) => reader = Box::new(reader.chain(f)),
                 }
             }
         }
-        Ok(WriteLogReader{ src: reader, records_read: 0, bytes_read: 0 })
+        Ok(WriteLogReader {
+            src: reader,
+            records_read: 0,
+            bytes_read: 0,
+        })
     }
 
     pub fn get_stats(&self) -> (u32, usize) {
@@ -215,12 +225,12 @@ impl Iterator for IntoIter {
 
         match result {
             Err(_) => return None,
-            Ok(v) => convert_result = string::String::from_utf8(v)
+            Ok(v) => convert_result = string::String::from_utf8(v),
         }
 
         match convert_result {
             Err(_) => None,
-            Ok(s) => Some(s)
+            Ok(s) => Some(s),
         }
     }
 }
@@ -229,7 +239,7 @@ impl IntoIterator for WriteLogReader {
     type Item = Record;
     type IntoIter = RecordIterator<IntoIter>;
     fn into_iter(self) -> Self::IntoIter {
-        RecordIterator::new(IntoIter{ wlr: self })
+        RecordIterator::new(IntoIter { wlr: self })
     }
 }
 
