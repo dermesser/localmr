@@ -2,6 +2,7 @@
 
 use std::collections::LinkedList;
 use std::clone::Clone;
+use std::hash::{Hasher, SipHasher};
 
 /// A (key,value) pair.
 pub struct Record {
@@ -85,4 +86,14 @@ pub trait MapReducer: Clone {
     /// Takes one key and one or more values and emits one or more
     /// values.
     fn reduce(&self, em: &mut REmitter, records: MultiRecord);
+
+    /// Determines how to map keys to (reduce) shards.
+    /// Returns a number in [0; n) determining the shard the key belongs in.
+    /// The default implementation uses a simple hash (SipHasher) and modulo.
+    fn shard(n: u32, key: &String) -> u32 {
+        let mut h = SipHasher::new();
+        h.write(key.as_bytes());
+        h.finish() as u32 % n
+    }
 }
+
