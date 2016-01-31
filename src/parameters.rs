@@ -7,7 +7,7 @@ pub struct MRParameters {
 
     pub mappers: usize,
     pub reducers: usize,
-    
+
     pub map_partition_size: usize,
 
     // Internal parameters

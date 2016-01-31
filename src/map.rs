@@ -26,7 +26,11 @@ struct MapPartition<MR: MapReducer, SinkGen: MRSinkGenerator> {
 }
 
 impl<MR: MapReducer, SinkGen: MRSinkGenerator> MapPartition<MR, SinkGen> {
-    pub fn _new(params: MRParameters, input: MapInput, mr: MR, output: SinkGen) -> MapPartition<MR, SinkGen> {
+    pub fn _new(params: MRParameters,
+                input: MapInput,
+                mr: MR,
+                output: SinkGen)
+                -> MapPartition<MR, SinkGen> {
         MapPartition {
             mr: mr,
             params: params,
@@ -91,7 +95,9 @@ impl<MR: MapReducer, SinkGen: MRSinkGenerator> MapPartition<MR, SinkGen> {
         let mut outputs = Vec::new();
 
         for i in 0..self.params.reducers {
-            let out = self.sink.new_output(&fmt::format(format_args!("mapout_{}.{}", self.params.shard_id, i)));
+            let out = self.sink.new_output(&fmt::format(format_args!("mapout_{}.{}",
+                                                                     self.params.shard_id,
+                                                                     i)));
             outputs.push(out);
         }
         assert_eq!(outputs.len(), self.params.reducers);
@@ -142,7 +148,7 @@ impl<MR: MapReducer, SinkGen: MRSinkGenerator> MapPartition<MR, SinkGen> {
 #[cfg(test)]
 mod tests {
     use closure_mr::ClosureMapReducer;
-    use formats::util::{RecordIterator};
+    use formats::util::RecordIterator;
     use formats::lines::LinesSinkGenerator;
     use map::MapPartition;
     use mapreducer::{MEmitter, REmitter, Record, MultiRecord};
@@ -183,7 +189,10 @@ mod tests {
 
     #[test]
     fn test_map_partition() {
-        let mp = MapPartition::_new(MRParameters::new().set_concurrency(4, 3), get_input(), get_mr(), get_output());
+        let mp = MapPartition::_new(MRParameters::new().set_concurrency(4, 3),
+                                    get_input(),
+                                    get_mr(),
+                                    get_output());
         mp._run();
     }
 }
