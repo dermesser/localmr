@@ -59,7 +59,12 @@ impl<I: Iterator<Item = String>> Iterator for KVReadIterator<I> {
         match (k, v) {
             (None, _) => None,
             (_, None) => None,
-            (Some(k_), Some(v_)) => Some(Record { key: k_, value: v_ }),
+            (Some(k_), Some(v_)) => {
+                Some(Record {
+                    key: k_,
+                    value: v_,
+                })
+            }
         }
     }
 }

@@ -107,7 +107,7 @@ impl util::MRSinkGenerator for LinesSinkGenerator {
         let f = fs::OpenOptions::new().write(true).truncate(true).create(true).open(path);
         match f {
             Err(e) => panic!("Couldn't open lines output file {}: {}", name, e),
-            Ok(f) => return LinesWriter { file: f }
+            Ok(f) => return LinesWriter { file: f },
         }
     }
 }
@@ -160,7 +160,14 @@ mod test {
         }
 
         {
-            assert_eq!(fs::OpenOptions::new().read(true).open("test_output_1").unwrap().metadata().unwrap().len(), 200);
+            assert_eq!(fs::OpenOptions::new()
+                           .read(true)
+                           .open("test_output_1")
+                           .unwrap()
+                           .metadata()
+                           .unwrap()
+                           .len(),
+                       200);
         }
         fs::remove_file("test_output_1");
     }

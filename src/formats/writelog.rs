@@ -126,7 +126,7 @@ impl MRSinkGenerator for WriteLogGenerator {
         let writer = WriteLogWriter::<fs::File>::new_to_file(&path, false);
         match writer {
             Err(e) => panic!("Could not open {}: {}", path, e),
-            Ok(w) => w
+            Ok(w) => w,
         }
     }
 }

@@ -41,7 +41,9 @@ impl<MR: MapReducer> MapPartition<MR> {
         loop {
             match self.input.pop_front() {
                 None => break,
-                Some(record) => { self.sorted_input.insert(record.key, record.value); },
+                Some(record) => {
+                    self.sorted_input.insert(record.key, record.value);
+                }
             }
         }
     }
@@ -61,10 +63,14 @@ impl<MR: MapReducer> MapPartition<MR> {
                 let val;
                 match self.sorted_input.remove(k) {
                     None => continue,
-                    Some(v) => val = v
+                    Some(v) => val = v,
                 }
                 let mut e = MEmitter::new();
-                self.mr.map(&mut e, Record { key: k.clone(), value: val });
+                self.mr.map(&mut e,
+                            Record {
+                                key: k.clone(),
+                                value: val,
+                            });
                 self.insert_result(e);
             }
 
@@ -78,12 +84,12 @@ impl<MR: MapReducer> MapPartition<MR> {
                 let r1 = self.output.write(k.as_bytes());
                 match r1 {
                     Err(e) => panic!("couldn't write map output: {}", e),
-                    Ok(_) => ()
+                    Ok(_) => (),
                 }
                 let r2 = self.output.write(v.as_bytes());
                 match r2 {
                     Err(e) => panic!("couldn't write map output: {}", e),
-                    Ok(_) => ()
+                    Ok(_) => (),
                 }
             }
         }
@@ -97,8 +103,13 @@ impl<MR: MapReducer> MapPartition<MR> {
             }
 
             match e {
-                None => { self.sorted_output.insert(r.key, vec![r.value]); },
-                Some(mut v) => { v.push(r.value); self.sorted_output.insert(r.key, v); },
+                None => {
+                    self.sorted_output.insert(r.key, vec![r.value]);
+                }
+                Some(mut v) => {
+                    v.push(r.value);
+                    self.sorted_output.insert(r.key, v);
+                }
             }
         }
     }

@@ -96,4 +96,3 @@ pub trait MapReducer: Clone {
         h.finish() as u32 % n
     }
 }
-
