@@ -1,6 +1,9 @@
+//! A MapReducer that uses supplied map()/reduce() functions.
+
 use mapreducer::{MEmitter, MapReducer, MapperF, MultiRecord, REmitter, Record, ReducerF};
 
-struct ClosureMapReducer {
+/// Use your functions in a MapReduce (instead of implementing your own mapreducer)
+pub struct ClosureMapReducer {
     mapper: MapperF,
     reducer: ReducerF,
 }
@@ -15,6 +18,7 @@ impl Clone for ClosureMapReducer {
 }
 
 impl ClosureMapReducer {
+    /// Create a new MapReducer from the supplied functions.
     pub fn new(mapper: MapperF, reducer: ReducerF) -> ClosureMapReducer {
         ClosureMapReducer {
             mapper: mapper,

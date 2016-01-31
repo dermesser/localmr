@@ -1,3 +1,5 @@
+//! Various iterators/adapters used for input/output formats.
+
 use mapreducer::Record;
 use std::fmt;
 

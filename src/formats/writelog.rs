@@ -1,3 +1,6 @@
+//! WriteLogs are sequences of length-prefixed records of arbitrary data
+//! in a file.
+
 #![allow(dead_code)]
 
 use std::io::{Result, Write, Read};
