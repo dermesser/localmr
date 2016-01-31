@@ -10,8 +10,6 @@ use std::fs;
 use std::vec;
 use std::string;
 
-use mapreducer::Record;
-use formats::util::RecordIterator;
 use formats::util::MRSinkGenerator;
 
 /// A length-prefixed record stream named for the original use case,
@@ -242,15 +240,10 @@ impl WriteLogReader {
     }
 }
 
-/// Iterator type for WriteLogReader; used to implement IntoIterator
-pub struct IntoIter {
-    wlr: WriteLogReader,
-}
-
-impl Iterator for IntoIter {
+impl Iterator for WriteLogReader {
     type Item = String;
     fn next(&mut self) -> Option<String> {
-        let result = self.wlr.read_vec();
+        let result = self.read_vec();
         let convert_result;
 
         match result {
@@ -262,14 +255,6 @@ impl Iterator for IntoIter {
             Err(_) => None,
             Ok(s) => Some(s),
         }
-    }
-}
-
-impl IntoIterator for WriteLogReader {
-    type Item = Record;
-    type IntoIter = RecordIterator<IntoIter>;
-    fn into_iter(self) -> Self::IntoIter {
-        RecordIterator::new(IntoIter { wlr: self })
     }
 }
 
