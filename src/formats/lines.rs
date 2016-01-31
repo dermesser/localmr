@@ -3,6 +3,7 @@
 //! using the RecordIterator from formats::util, the necessary key/value
 //! iterator can be implemented.
 
+use formats::util;
 use std::fs;
 use std::io;
 use std::io::{Read, Lines, BufRead};
@@ -70,9 +71,50 @@ impl<Src: Read> Iterator for LinesReader<Src> {
     }
 }
 
+pub struct LinesSinkGenerator {
+    basepath: String,
+}
+
+impl LinesSinkGenerator {
+    /// Use either a path like `/a/b/c/` to generate files in a directory
+    /// or `/a/b/c/file_prefix_` to create files with that prefix.
+    pub fn new(path: &String) -> LinesSinkGenerator {
+        LinesSinkGenerator { basepath: path.clone() }
+    }
+}
+
+pub struct LinesWriter {
+    file: fs::File,
+}
+
+impl io::Write for LinesWriter {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.file.write(buf).and(self.file.write(&['\n' as u8]))
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.file.flush()
+    }
+}
+
+impl util::MRSinkGenerator for LinesSinkGenerator {
+    type Sink = LinesWriter;
+    fn new_output(&mut self, name: &String) -> Self::Sink {
+        let mut path = self.basepath.clone();
+        path.push_str(&name[..]);
+        let f = fs::OpenOptions::new().write(true).truncate(true).create(true).open(path);
+        match f {
+            Err(e) => panic!("Couldn't open lines output file {}: {}", name, e),
+            Ok(f) => return LinesWriter { file: f }
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use formats::lines;
+    use formats::util::MRSinkGenerator;
+    use std::fs;
+    use std::io::Write;
 
     #[test]
     fn test_read_file() {
@@ -102,5 +144,21 @@ mod test {
         for line in it {
             println!("{}", line);
         }
+    }
+
+    #[test]
+    fn test_write_lines() {
+        let line = String::from("abc def hello world");
+        let mut gen = lines::LinesSinkGenerator::new(&String::from("test_output_"));
+        let mut f = gen.new_output(&String::from("1"));
+
+        for i in 0..10 {
+            f.write(line.as_bytes());
+        }
+
+        {
+            assert_eq!(fs::OpenOptions::new().read(true).open("test_output_1").unwrap().metadata().unwrap().len(), 200);
+        }
+        fs::remove_file("test_output_1");
     }
 }
