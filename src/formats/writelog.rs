@@ -30,7 +30,7 @@ use formats::util::MRSinkGenerator;
 /// files are indexed by IDX files describing offset and length of single entries,
 /// which is why we don't need length prefixes here.
 ///
-pub struct WriteLogWriter<Sink: Write + Sized> {
+pub struct WriteLogWriter<Sink: Write> {
     dest: Sink,
 
     current_length: u64,
@@ -57,7 +57,7 @@ fn decode_u32(buf: [u8; 4]) -> u32 {
     val
 }
 
-impl<Sink: Write + Sized> WriteLogWriter<Sink> {
+impl<Sink: Write> WriteLogWriter<Sink> {
     /// Return a new WriteLog that writes to dest
     pub fn new(dest: Sink) -> WriteLogWriter<Sink> {
         WriteLogWriter {
@@ -83,7 +83,7 @@ impl<Sink: Write + Sized> WriteLogWriter<Sink> {
         (self.current_length, self.records_written)
     }
 }
-impl<Sink: Write + Sized> Write for WriteLogWriter<Sink> {
+impl<Sink: Write> Write for WriteLogWriter<Sink> {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         // BUG: May not account the length in a correct way if the length prefix
         // is written, but not the record.

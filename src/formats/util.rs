@@ -74,7 +74,7 @@ impl<I: Iterator<Item = String>> Iterator for KVReadIterator<I> {
 /// that can be used to write the output of a reduce partition.
 /// Values are always written as a whole to the writer.
 pub trait MRSinkGenerator {
-    type Sink: io::Write + Sized;
+    type Sink: io::Write;
     /// Return a new output.
     fn new_output(&mut self, name: &String) -> Self::Sink;
 }
