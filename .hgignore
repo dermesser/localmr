@@ -2,3 +2,4 @@ target
 Cargo.lock
 syntax: glob
 *.swp
+*.bk
