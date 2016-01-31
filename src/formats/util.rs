@@ -39,6 +39,31 @@ impl<I: Iterator<Item = String>> Iterator for RecordIterator<I> {
     }
 }
 
+/// Another transformation of [string] -> [(string,string)]; however,
+/// this one always reads one value, treats it as key, and another one,
+/// treated as value.
+pub struct KVReadIterator<I: Iterator<Item = String>> {
+    i: I,
+}
+
+impl<I: Iterator<Item = String>> KVReadIterator<I> {
+    pub fn new(it: I) -> KVReadIterator<I> {
+        KVReadIterator { i: it }
+    }
+}
+
+impl<I: Iterator<Item = String>> Iterator for KVReadIterator<I> {
+    type Item = Record;
+    fn next(&mut self) -> Option<Record> {
+        let (k, v) = (self.i.next(), self.i.next());
+        match (k, v) {
+            (None, _) => None,
+            (_, None) => None,
+            (Some(k_), Some(v_)) => Some(Record { key: k_, value: v_ }),
+        }
+    }
+}
+
 /// A type implementing MRSinkGenerator is used at the end of the reducer
 /// phase to write the output. Given a name, new() should return a new object
 /// that can be used to write the output of a reduce partition.
