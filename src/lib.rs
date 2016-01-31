@@ -6,7 +6,7 @@ pub mod closure_mr;
 pub mod formats;
 pub mod map;
 pub mod mapreducer;
-
+pub mod parameters;
 
 
 #[test]
