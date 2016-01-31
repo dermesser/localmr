@@ -1,6 +1,8 @@
 //! Implements the mapping phase.
 //!
 
+#![allow(dead_code)]
+
 use std::io::Write;
 use std::collections::{LinkedList, BTreeMap};
 use mapreducer::{Record, MapReducer, MEmitter};
@@ -74,6 +76,9 @@ impl<MR: MapReducer> MapPartition<MR> {
                 self.insert_result(e);
             }
 
+            if key_buffer.len() < key_buffer_size {
+                break;
+            }
             key_buffer.clear();
         }
     }
@@ -112,5 +117,54 @@ impl<MR: MapReducer> MapPartition<MR> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use closure_mr::ClosureMapReducer;
+    use formats::util::RecordIterator;
+    use map::MapPartition;
+    use mapreducer::{MEmitter, REmitter, Record, MultiRecord};
+    use std::collections::LinkedList;
+    use std::io::Write;
+
+    fn mapper_func(e: &mut MEmitter, r: Record) {
+        for w in r.value.split_whitespace() {
+            e.emit(String::from(w), String::from("1"));
+        }
+    }
+
+    fn reducer_func(_: &mut REmitter, _: MultiRecord) {
+        // no-op
+    }
+
+    fn get_mr() -> ClosureMapReducer {
+        ClosureMapReducer::new(mapper_func, reducer_func)
+    }
+
+    fn get_input() -> LinkedList<Record> {
+        let inp: Vec<String> = vec!["abc def",
+                                    "xy yz za",
+                                    "hello world",
+                                    "let's do this",
+                                    "foo bar baz"]
+                                   .iter()
+                                   .map(move |s| String::from(*s))
+                                   .collect();
+        let ri: RecordIterator<_> = RecordIterator::new(inp.into_iter());
+        ri.collect()
+    }
+
+
+    fn get_output() -> Box<Write> {
+        use formats::lines::LinesWriter;
+        Box::new(LinesWriter::new_to_file(&String::from("mapphase_1.wlg")).unwrap())
+    }
+
+    #[test]
+    fn test_map_partition() {
+        let mp = MapPartition::_new(get_input(), get_mr(), get_output());
+        mp._run();
     }
 }
