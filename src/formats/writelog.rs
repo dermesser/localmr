@@ -347,6 +347,7 @@ mod test {
                 }
             }
         }
+        fs::remove_file(filename);
     }
 
     extern crate time;
