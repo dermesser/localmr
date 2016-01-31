@@ -1,11 +1,15 @@
 //! A MapReducer that uses supplied map()/reduce() functions.
 
-use mapreducer::{MEmitter, MapReducer, MapperF, MultiRecord, REmitter, Record, ReducerF};
+use mapreducer::{MEmitter, MapReducer, MapperF, MultiRecord, REmitter, Record, ReducerF, SharderF,
+                 _std_shard};
 
-/// Use your functions in a MapReduce (instead of implementing your own mapreducer)
+/// This type implements the MapReducer trait. You can use it to provide your own functions to a
+/// MapReduce process. If you need more flexibility, however, you may want to simply implement your
+/// own type that fulfills MapReducer.
 pub struct ClosureMapReducer {
     mapper: MapperF,
     reducer: ReducerF,
+    sharder: SharderF,
 }
 
 impl Clone for ClosureMapReducer {
@@ -13,6 +17,7 @@ impl Clone for ClosureMapReducer {
         ClosureMapReducer {
             mapper: self.mapper,
             reducer: self.reducer,
+            sharder: self.sharder,
         }
     }
 }
@@ -23,7 +28,12 @@ impl ClosureMapReducer {
         ClosureMapReducer {
             mapper: mapper,
             reducer: reducer,
+            sharder: _std_shard,
         }
+    }
+    /// Set the function used for sharding.
+    pub fn set_sharder(&mut self, s: SharderF) {
+        self.sharder = s;
     }
 }
 
@@ -33,5 +43,8 @@ impl MapReducer for ClosureMapReducer {
     }
     fn reduce(&self, e: &mut REmitter, r: MultiRecord) {
         (self.reducer)(e, r)
+    }
+    fn shard(&self, n: usize, k: &String) -> usize {
+        (self.sharder)(n, k)
     }
 }
