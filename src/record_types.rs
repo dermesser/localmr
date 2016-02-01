@@ -12,7 +12,7 @@ impl PartialOrd for Record {
     fn partial_cmp(&self, other: &Record) -> Option<Ordering> {
         match self.key.cmp(&other.key) {
             Ordering::Equal => Some(self.value.cmp(&other.value)),
-            o => Some(o)
+            o => Some(o),
         }
     }
 }
