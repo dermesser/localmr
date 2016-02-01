@@ -1,13 +1,24 @@
 //! The MapReducer trait and associated types.
 
-use std::collections::LinkedList;
 use std::clone::Clone;
+use std::cmp::{PartialOrd, Eq, Ordering};
+use std::collections::LinkedList;
 use std::hash::{Hasher, SipHasher};
 
 /// A (key,value) pair.
+#[derive(Clone, PartialEq, Eq)]
 pub struct Record {
     pub key: String,
     pub value: String,
+}
+
+impl PartialOrd for Record {
+    fn partial_cmp(&self, other: &Record) -> Option<Ordering> {
+        match self.key.cmp(&other.key) {
+            Ordering::Equal => Some(self.value.cmp(&other.value)),
+            o => Some(o)
+        }
+    }
 }
 
 /// A (key,[value]) pair; typicall used as input to a reducer function.
