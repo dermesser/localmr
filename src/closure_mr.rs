@@ -1,7 +1,7 @@
 //! A MapReducer that uses supplied map()/reduce() functions.
 
-use mapreducer::{MEmitter, MapReducer, MapperF, MultiRecord, REmitter, Record, ReducerF, SharderF,
-                 _std_shard};
+use mapreducer::{MapReducer, MapperF, ReducerF, SharderF, _std_shard};
+use record_types::{Record, MultiRecord, MEmitter, REmitter};
 
 /// This type implements the MapReducer trait. You can use it to provide your own functions to a
 /// MapReduce process. If you need more flexibility, however, you may want to simply implement your

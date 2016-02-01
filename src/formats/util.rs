@@ -1,7 +1,7 @@
 //! Various iterators/adapters used for input/output formats.
 
 
-use mapreducer::Record;
+use record_types::Record;
 use std::fmt;
 use std::io;
 

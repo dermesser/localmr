@@ -6,7 +6,8 @@
 use std::fmt;
 use std::io::Write;
 use std::collections::{LinkedList, BTreeMap};
-use mapreducer::{Record, MapReducer, MEmitter};
+use mapreducer::MapReducer;
+use record_types::{Record, MEmitter};
 use parameters::MRParameters;
 use formats::util::MRSinkGenerator;
 
@@ -151,7 +152,7 @@ mod tests {
     use formats::util::RecordIterator;
     use formats::lines::LinesSinkGenerator;
     use map::MapPartition;
-    use mapreducer::{MEmitter, REmitter, Record, MultiRecord};
+    use record_types::{MEmitter, REmitter, Record, MultiRecord};
     use parameters::MRParameters;
     use std::collections::LinkedList;
 

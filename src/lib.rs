@@ -7,6 +7,7 @@ pub mod formats;
 pub mod map;
 pub mod mapreducer;
 pub mod parameters;
+pub mod record_types;
 pub mod shard_merge;
 
 
