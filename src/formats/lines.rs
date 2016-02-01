@@ -135,9 +135,11 @@ mod test {
             Ok(r) => it = r,
         }
 
-        for line in it {
-            println!("{}", line);
+        let mut cnt = 0;
+        for _ in it {
+            cnt += 1;
         }
+        assert!(cnt > 5);
     }
 
     #[test]
@@ -150,10 +152,11 @@ mod test {
             Ok(r) => it = r,
         }
 
-        println!("Reading...");
-        for line in it {
-            println!("{}", line);
+        let mut cnt = 0;
+        for _ in it {
+            cnt += 1;
         }
+        assert!(cnt > 300);
     }
 
     #[test]
