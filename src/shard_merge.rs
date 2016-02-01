@@ -92,7 +92,6 @@ impl<'a, T: PartialOrd + Clone> ShardMergeIterator<'a, T> {
             // its is left part, right is right part
             let split_at = its.len() / 2;
             let right = its.split_off(split_at);
-            println!("{} -- {}", its.len(), right.len());
             ShardMergeIterator { left: Box::new(ShardMergeIterator::merge(its)), right: Box::new(ShardMergeIterator::merge(right)), .. ShardMergeIterator::default() }
         }
     }
