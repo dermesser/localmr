@@ -189,10 +189,19 @@ mod tests {
 
     #[test]
     fn test_map_partition() {
-        let mp = MapPartition::_new(MRParameters::new().set_concurrency(4, 3),
+        use std::fmt::format;
+        use std::fs;
+
+        let reducers = 3;
+        let mp = MapPartition::_new(MRParameters::new().set_concurrency(4, reducers),
                                     get_input(),
                                     get_mr(),
                                     get_output());
         mp._run();
+
+        for i in 0..reducers {
+            let filename = format(format_args!("test_map_mapout_0.{}", i));
+            let _ = fs::remove_file(filename);
+        }
     }
 }
