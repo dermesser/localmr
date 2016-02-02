@@ -180,4 +180,27 @@ mod tests {
                    get_collection_3().len() + get_collection_4().len() +
                    get_collection_5().len() + get_collection_6().len());
     }
+
+    use formats::lines;
+    use std::fmt;
+    use std::io::Write;
+
+    use std::cmp::Ord;
+
+    fn test_merge_large_files() {
+        let mut files = Vec::with_capacity(11);
+
+        for i in 0..11 {
+            let name = fmt::format(format_args!("testdata/sorted{}.txt", i));
+            files.push(lines::new_from_file(&name).unwrap());
+        }
+
+        let merge_it = ShardMergeIterator::build(&mut files.into_iter());
+
+        let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt")).unwrap();
+
+        for line in merge_it {
+            outfile.write(line.as_bytes());
+        }
+    }
 }
