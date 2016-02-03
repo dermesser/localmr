@@ -75,9 +75,20 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             comparer: None,
         }
     }
+
+    pub fn build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt) -> ShardMergeIterator<'a, T>
+        where T: 'a, It: 'a {
+            ShardMergeIterator::_build(sources, None)
+    }
+    
+    pub fn build_with_cmp<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: Comparer<T>) -> ShardMergeIterator<'a, T>
+        where T: 'a, It: 'a {
+            ShardMergeIterator::_build(sources, Some(cmp))
+    }
+
     /// Takes multiple iterators of type It and generates one ShardedMergeIterator..
     /// (yes, iterator over a collection of iterators).
-    pub fn build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt)
+    fn _build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: Option<Comparer<T>>)
                                                                     -> ShardMergeIterator<'a, T>
         where T: 'a,
               It: 'a
@@ -96,6 +107,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
                     merged.push(ShardMergeIterator {
                         left: Box::new(src1),
                         right: Box::new(iter::empty()),
+                        comparer: cmp,
                         ..ShardMergeIterator::default()
                     })
                 }
@@ -103,6 +115,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
                     merged.push(ShardMergeIterator {
                         left: Box::new(src1),
                         right: Box::new(src),
+                        comparer: cmp,
                         ..ShardMergeIterator::default()
                     })
                 }
@@ -110,11 +123,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
         }
 
         // Recursively build the merge tree from the leaves.
-        ShardMergeIterator::merge(merged)
-    }
-
-    pub fn set_comparer(&mut self, cmp: Comparer<T>) {
-        self.comparer = Some(cmp);
+        ShardMergeIterator::merge(merged, cmp)
     }
 
     fn compare(&self, a: &T, b: &T) -> Ordering {
@@ -126,19 +135,20 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
 
     /// Merge multiple ShardMergeIterators, recursively (meaning it will result in a more or less
     /// balanced merge sort tree).
-    fn merge(mut its: Vec<ShardMergeIterator<'a, T>>) -> ShardMergeIterator<'a, T>
+    fn merge(mut its: Vec<ShardMergeIterator<'a, T>>, cmp: Option<Comparer<T>>) -> ShardMergeIterator<'a, T>
         where T: 'a
     {
         if its.len() == 0 {
             ShardMergeIterator::default()
         } else if its.len() == 1 {
-            ShardMergeIterator { left: Box::new(its.remove(0)), ..ShardMergeIterator::default() }
+            ShardMergeIterator { left: Box::new(its.remove(0)), comparer: cmp, ..ShardMergeIterator::default() }
         } else if its.len() == 2 {
             let it1 = its.remove(0);
             let it2 = its.remove(0);
             ShardMergeIterator {
                 left: Box::new(it1),
                 right: Box::new(it2),
+                comparer: cmp,
                 ..ShardMergeIterator::default()
             }
         } else {
@@ -146,8 +156,9 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             let split_at = its.len() / 2;
             let right = its.split_off(split_at);
             ShardMergeIterator {
-                left: Box::new(ShardMergeIterator::merge(its)),
-                right: Box::new(ShardMergeIterator::merge(right)),
+                left: Box::new(ShardMergeIterator::merge(its, cmp)),
+                right: Box::new(ShardMergeIterator::merge(right, cmp)),
+                comparer: cmp,
                 ..ShardMergeIterator::default()
             }
         }
@@ -170,6 +181,35 @@ fn sane_char_compare(a: char, b: char) -> Ordering {
         }
     } else {
         cmp
+    }
+}
+
+#[inline]
+fn dict_char_compare(a: char, b: char) -> Ordering {
+    use std::ascii::AsciiExt;
+    // denormalize case to lower case
+    a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase())
+}
+
+/// Compares a with b in a totally case insensitive manner
+/// (like coreutil sort)
+#[inline]
+fn dict_string_compare(a: &String, b: &String) -> Ordering {
+    let (mut charsa, mut charsb) = (a.chars(), b.chars());
+    loop {
+        match (charsa.next(), charsb.next()) {
+            (None, None) => return Ordering::Equal,
+            (_, None) => return Ordering::Greater,
+            (None, _) => return Ordering::Less,
+            (Some(ca), Some(cb)) => {
+                let cmp = dict_char_compare(ca, cb);
+                if cmp != Ordering::Equal {
+                    return cmp;
+                } else {
+                    continue
+                }
+            }
+        }
     }
 }
 
@@ -247,7 +287,7 @@ mod tests {
     use std::io::Write;
 
     // Slow test!
-    //#[test]
+    #[test]
     fn test_merge_large_files() {
         let mut files = Vec::with_capacity(11);
 
@@ -256,8 +296,7 @@ mod tests {
             files.push(lines::new_from_file(&name).unwrap());
         }
 
-        let merge_it = ShardMergeIterator::build(&mut files.into_iter());
-
+        let merge_it = ShardMergeIterator::build_with_cmp(&mut files.into_iter(), dict_string_compare);
         let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt")).unwrap();
 
         for line in merge_it {
@@ -266,7 +305,7 @@ mod tests {
     }
 
     use std::cmp::Ordering;
-    use super::{sane_char_compare, sane_string_compare};
+    use super::{sane_char_compare, sane_string_compare, dict_string_compare};
 
     #[test]
     fn test_sane_char_compare() {
