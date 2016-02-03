@@ -2,21 +2,29 @@
 //! https://drive.google.com/open?id=1grB87a0w9fQ2k7i04N3VJvYlw2BldxWNcHublW_ygJs.
 //! Genericized in order to build arbitrary merge trees.
 
-use std::cmp::PartialOrd;
+#![allow(dead_code)]
+
+
+use std::cmp::{Ord, Ordering};
 use std::iter;
+
+/// Function type to be used as custom compare function
+/// (rust's standard String comparison is based on ASCII values, not dictionary order)
+pub type Comparer<T> = fn(a: &T, b: &T) -> Ordering;
 
 /// See module description.
 /// This type uses dynamic instead of static dispatch because it realizes an arbitrary structure
 /// and can therefore not work with a single type signature.
-pub struct ShardMergeIterator<'a, T: PartialOrd> {
+pub struct ShardMergeIterator<'a, T: Ord> {
     left: Box<Iterator<Item = T> + 'a>,
     right: Box<Iterator<Item = T> + 'a>,
 
     left_peeked: Option<T>,
     right_peeked: Option<T>,
+    comparer: Option<Comparer<T>>,
 }
 
-impl<'a, T: PartialOrd + Clone> Iterator for ShardMergeIterator<'a, T> {
+impl<'a, T: Ord + Clone> Iterator for ShardMergeIterator<'a, T> {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
         // fill up
@@ -41,20 +49,21 @@ impl<'a, T: PartialOrd + Clone> Iterator for ShardMergeIterator<'a, T> {
                 self.right_peeked = None;
                 return r;
             }
-            (l @ Some(_), r @ Some(_)) => {
-                if l <= r {
+            (Some(l), Some(r)) => {
+                let cmp = self.compare(&l, &r);
+                if cmp == Ordering::Less || cmp == Ordering::Equal {
                     self.left_peeked = None;
-                    return l;
+                    return Some(l);
                 } else {
                     self.right_peeked = None;
-                    return r;
+                    return Some(r);
                 }
             }
         }
     }
 }
 
-impl<'a, T: PartialOrd + Clone> ShardMergeIterator<'a, T> {
+impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
     fn default() -> ShardMergeIterator<'a, T>
         where T: 'a
     {
@@ -63,6 +72,7 @@ impl<'a, T: PartialOrd + Clone> ShardMergeIterator<'a, T> {
             right: Box::new(iter::empty()),
             left_peeked: None,
             right_peeked: None,
+            comparer: None,
         }
     }
     /// Takes multiple iterators of type It and generates one ShardedMergeIterator..
@@ -103,6 +113,17 @@ impl<'a, T: PartialOrd + Clone> ShardMergeIterator<'a, T> {
         ShardMergeIterator::merge(merged)
     }
 
+    pub fn set_comparer(&mut self, cmp: Comparer<T>) {
+        self.comparer = Some(cmp);
+    }
+
+    fn compare(&self, a: &T, b: &T) -> Ordering {
+        match self.comparer {
+            None => a.cmp(b),
+            Some(f) => f(a, b)
+        }
+    }
+
     /// Merge multiple ShardMergeIterators, recursively (meaning it will result in a more or less
     /// balanced merge sort tree).
     fn merge(mut its: Vec<ShardMergeIterator<'a, T>>) -> ShardMergeIterator<'a, T>
@@ -128,6 +149,46 @@ impl<'a, T: PartialOrd + Clone> ShardMergeIterator<'a, T> {
                 left: Box::new(ShardMergeIterator::merge(its)),
                 right: Box::new(ShardMergeIterator::merge(right)),
                 ..ShardMergeIterator::default()
+            }
+        }
+    }
+}
+
+#[inline]
+fn sane_char_compare(a: char, b: char) -> Ordering {
+    use std::ascii::AsciiExt;
+    // denormalize case to lower case
+    let cmp = a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase());
+
+    // Handle the case of a and b being the same letter but with different case.
+    // Native: 'B' < 'a'; we want: 'B' > 'a'
+    if cmp == Ordering::Equal {
+        match a.cmp(&b) {
+            Ordering::Equal => Ordering::Equal,  // actually same character
+            Ordering::Less => Ordering::Greater, // 'B' > 'a'!
+            Ordering::Greater => Ordering::Less, // 'a' < 'B'!
+        }
+    } else {
+        cmp
+    }
+}
+
+/// Compares a with b in dictionary order (case insensitive)
+#[inline]
+fn sane_string_compare(a: &String, b: &String) -> Ordering {
+    let (mut charsa, mut charsb) = (a.chars(), b.chars());
+    loop {
+        match (charsa.next(), charsb.next()) {
+            (None, None) => return Ordering::Equal,
+            (_, None) => return Ordering::Greater,
+            (None, _) => return Ordering::Less,
+            (Some(ca), Some(cb)) => {
+                let cmp = sane_char_compare(ca, cb);
+                if cmp != Ordering::Equal {
+                    return cmp;
+                } else {
+                    continue
+                }
             }
         }
     }
@@ -185,8 +246,8 @@ mod tests {
     use std::fmt;
     use std::io::Write;
 
-    use std::cmp::Ord;
-
+    // Slow test!
+    //#[test]
     fn test_merge_large_files() {
         let mut files = Vec::with_capacity(11);
 
@@ -200,7 +261,63 @@ mod tests {
         let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt")).unwrap();
 
         for line in merge_it {
-            outfile.write(line.as_bytes());
+            let _ = outfile.write(line.as_bytes());
+        }
+    }
+
+    use std::cmp::Ordering;
+    use super::{sane_char_compare, sane_string_compare};
+
+    #[test]
+    fn test_sane_char_compare() {
+        assert_eq!(sane_char_compare('a', 'B'), Ordering::Less);
+        assert_eq!(sane_char_compare('a', 'a'), Ordering::Equal);
+        assert_eq!(sane_char_compare('A', 'a'), Ordering::Greater);
+        assert_eq!(sane_char_compare('B', 'a'), Ordering::Greater);
+    }
+
+    #[test]
+    fn test_sane_string_compare() {
+        let cnv = String::from;
+        let s1 = &cnv("");
+        let s2 = &cnv("0abc");
+        let s3 = &cnv("123");
+        let s4 = &cnv("abc");
+        let s5 = &cnv("Abc");
+        let s6 = &cnv("ABC");
+        let s7 = &cnv("aBC");
+
+        assert_eq!(sane_string_compare(s1, s2), Ordering::Less);
+        assert_eq!(sane_string_compare(s2, s3), Ordering::Less);
+        assert_eq!(sane_string_compare(s3, s2), Ordering::Greater);
+        assert_eq!(sane_string_compare(s2, s2), Ordering::Equal);
+        assert_eq!(sane_string_compare(s4, s5), Ordering::Less);
+        assert_eq!(sane_string_compare(s5, s6), Ordering::Less);
+        assert_eq!(sane_string_compare(s6, s7), Ordering::Greater);
+    }
+
+    #[inline]
+    fn bogus_fn(o: Ordering) -> bool {
+        if o == Ordering::Equal {
+            panic!("bogus panic")
+        }
+        true
+    }
+
+    // Slow test!
+    //#[test]
+    fn bench_sane_string_compare() {
+        let cnv = String::from;
+        let s1 = &cnv("");
+        let s2 = &cnv("0abc");
+        let s3 = &cnv("123");
+        let s4 = &cnv("abc");
+        let s5 = &cnv("Abc");
+
+        for _ in 0..50000000 {
+            bogus_fn(sane_string_compare(s1, s2));
+            bogus_fn(sane_string_compare(s4, s3));
+            bogus_fn(sane_string_compare(s4, s5));
         }
     }
 }
