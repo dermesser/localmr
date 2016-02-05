@@ -9,7 +9,7 @@ pub mod mapreducer;
 pub mod parameters;
 pub mod record_types;
 pub mod shard_merge;
-
+pub mod sort;
 
 #[test]
 fn it_works() {}

@@ -4,13 +4,10 @@
 
 #![allow(dead_code)]
 
+use sort;
 
 use std::cmp::{Ord, Ordering};
 use std::iter;
-
-/// Function type to be used as custom compare function
-/// (rust's standard String comparison is based on ASCII values, not dictionary order)
-pub type Comparer<T> = fn(a: &T, b: &T) -> Ordering;
 
 /// See module description.
 /// This type uses dynamic instead of static dispatch because it realizes an arbitrary structure
@@ -21,7 +18,7 @@ pub struct ShardMergeIterator<'a, T: Ord> {
 
     left_peeked: Option<T>,
     right_peeked: Option<T>,
-    comparer: Option<Comparer<T>>,
+    comparer: Option<sort::Comparer<T>>,
 }
 
 impl<'a, T: Ord + Clone> Iterator for ShardMergeIterator<'a, T> {
@@ -81,14 +78,14 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             ShardMergeIterator::_build(sources, None)
     }
     
-    pub fn build_with_cmp<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: Comparer<T>) -> ShardMergeIterator<'a, T>
+    pub fn build_with_cmp<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: sort::Comparer<T>) -> ShardMergeIterator<'a, T>
         where T: 'a, It: 'a {
             ShardMergeIterator::_build(sources, Some(cmp))
     }
 
     /// Takes multiple iterators of type It and generates one ShardedMergeIterator..
     /// (yes, iterator over a collection of iterators).
-    fn _build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: Option<Comparer<T>>)
+    fn _build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: Option<sort::Comparer<T>>)
                                                                     -> ShardMergeIterator<'a, T>
         where T: 'a,
               It: 'a
@@ -135,7 +132,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
 
     /// Merge multiple ShardMergeIterators, recursively (meaning it will result in a more or less
     /// balanced merge sort tree).
-    fn merge(mut its: Vec<ShardMergeIterator<'a, T>>, cmp: Option<Comparer<T>>) -> ShardMergeIterator<'a, T>
+    fn merge(mut its: Vec<ShardMergeIterator<'a, T>>, cmp: Option<sort::Comparer<T>>) -> ShardMergeIterator<'a, T>
         where T: 'a
     {
         if its.len() == 0 {
@@ -160,75 +157,6 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
                 right: Box::new(ShardMergeIterator::merge(right, cmp)),
                 comparer: cmp,
                 ..ShardMergeIterator::default()
-            }
-        }
-    }
-}
-
-#[inline]
-fn sane_char_compare(a: char, b: char) -> Ordering {
-    use std::ascii::AsciiExt;
-    // denormalize case to lower case
-    let cmp = a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase());
-
-    // Handle the case of a and b being the same letter but with different case.
-    // Native: 'B' < 'a'; we want: 'B' > 'a'
-    if cmp == Ordering::Equal {
-        match a.cmp(&b) {
-            Ordering::Equal => Ordering::Equal,  // actually same character
-            Ordering::Less => Ordering::Greater, // 'B' > 'a'!
-            Ordering::Greater => Ordering::Less, // 'a' < 'B'!
-        }
-    } else {
-        cmp
-    }
-}
-
-#[inline]
-fn dict_char_compare(a: char, b: char) -> Ordering {
-    use std::ascii::AsciiExt;
-    // denormalize case to lower case
-    a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase())
-}
-
-/// Compares a with b in a totally case insensitive manner
-/// (like coreutil sort)
-#[inline]
-fn dict_string_compare(a: &String, b: &String) -> Ordering {
-    let (mut charsa, mut charsb) = (a.chars(), b.chars());
-    loop {
-        match (charsa.next(), charsb.next()) {
-            (None, None) => return Ordering::Equal,
-            (_, None) => return Ordering::Greater,
-            (None, _) => return Ordering::Less,
-            (Some(ca), Some(cb)) => {
-                let cmp = dict_char_compare(ca, cb);
-                if cmp != Ordering::Equal {
-                    return cmp;
-                } else {
-                    continue
-                }
-            }
-        }
-    }
-}
-
-/// Compares a with b in dictionary order (case insensitive)
-#[inline]
-fn sane_string_compare(a: &String, b: &String) -> Ordering {
-    let (mut charsa, mut charsb) = (a.chars(), b.chars());
-    loop {
-        match (charsa.next(), charsb.next()) {
-            (None, None) => return Ordering::Equal,
-            (_, None) => return Ordering::Greater,
-            (None, _) => return Ordering::Less,
-            (Some(ca), Some(cb)) => {
-                let cmp = sane_char_compare(ca, cb);
-                if cmp != Ordering::Equal {
-                    return cmp;
-                } else {
-                    continue
-                }
             }
         }
     }
@@ -296,7 +224,7 @@ mod tests {
             files.push(lines::new_from_file(&name).unwrap());
         }
 
-        let merge_it = ShardMergeIterator::build_with_cmp(&mut files.into_iter(), dict_string_compare);
+        let merge_it = ShardMergeIterator::build_with_cmp(&mut files.into_iter(), sort::dict_string_compare);
         let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt")).unwrap();
 
         for line in merge_it {
@@ -305,14 +233,14 @@ mod tests {
     }
 
     use std::cmp::Ordering;
-    use super::{sane_char_compare, sane_string_compare, dict_string_compare};
+    use sort;
 
     #[test]
     fn test_sane_char_compare() {
-        assert_eq!(sane_char_compare('a', 'B'), Ordering::Less);
-        assert_eq!(sane_char_compare('a', 'a'), Ordering::Equal);
-        assert_eq!(sane_char_compare('A', 'a'), Ordering::Greater);
-        assert_eq!(sane_char_compare('B', 'a'), Ordering::Greater);
+        assert_eq!(sort::sane_char_compare('a', 'B'), Ordering::Less);
+        assert_eq!(sort::sane_char_compare('a', 'a'), Ordering::Equal);
+        assert_eq!(sort::sane_char_compare('A', 'a'), Ordering::Greater);
+        assert_eq!(sort::sane_char_compare('B', 'a'), Ordering::Greater);
     }
 
     #[test]
@@ -326,13 +254,13 @@ mod tests {
         let s6 = &cnv("ABC");
         let s7 = &cnv("aBC");
 
-        assert_eq!(sane_string_compare(s1, s2), Ordering::Less);
-        assert_eq!(sane_string_compare(s2, s3), Ordering::Less);
-        assert_eq!(sane_string_compare(s3, s2), Ordering::Greater);
-        assert_eq!(sane_string_compare(s2, s2), Ordering::Equal);
-        assert_eq!(sane_string_compare(s4, s5), Ordering::Less);
-        assert_eq!(sane_string_compare(s5, s6), Ordering::Less);
-        assert_eq!(sane_string_compare(s6, s7), Ordering::Greater);
+        assert_eq!(sort::sane_string_compare(s1, s2), Ordering::Less);
+        assert_eq!(sort::sane_string_compare(s2, s3), Ordering::Less);
+        assert_eq!(sort::sane_string_compare(s3, s2), Ordering::Greater);
+        assert_eq!(sort::sane_string_compare(s2, s2), Ordering::Equal);
+        assert_eq!(sort::sane_string_compare(s4, s5), Ordering::Less);
+        assert_eq!(sort::sane_string_compare(s5, s6), Ordering::Less);
+        assert_eq!(sort::sane_string_compare(s6, s7), Ordering::Greater);
     }
 
     #[inline]
@@ -354,9 +282,9 @@ mod tests {
         let s5 = &cnv("Abc");
 
         for _ in 0..50000000 {
-            bogus_fn(sane_string_compare(s1, s2));
-            bogus_fn(sane_string_compare(s4, s3));
-            bogus_fn(sane_string_compare(s4, s5));
+            bogus_fn(sort::sane_string_compare(s1, s2));
+            bogus_fn(sort::sane_string_compare(s4, s3));
+            bogus_fn(sort::sane_string_compare(s4, s5));
         }
     }
 }
