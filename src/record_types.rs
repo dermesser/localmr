@@ -10,9 +10,18 @@ pub struct Record {
 
 impl PartialOrd for Record {
     fn partial_cmp(&self, other: &Record) -> Option<Ordering> {
+        Some(match self.key.cmp(&other.key) {
+            Ordering::Equal => self.value.cmp(&other.value),
+            o => o,
+        })
+    }
+}
+
+impl Ord for Record {
+    fn cmp(&self, other: &Record) -> Ordering {
         match self.key.cmp(&other.key) {
-            Ordering::Equal => Some(self.value.cmp(&other.value)),
-            o => Some(o),
+            Ordering::Equal => self.value.cmp(&other.value),
+            o => o,
         }
     }
 }
