@@ -49,7 +49,7 @@ fn dict_string_compare(a: &String, b: &String) -> Ordering {
                 if cmp != Ordering::Equal {
                     return cmp;
                 } else {
-                    continue
+                    continue;
                 }
             }
         }
@@ -70,7 +70,7 @@ fn sane_string_compare(a: &String, b: &String) -> Ordering {
                 if cmp != Ordering::Equal {
                     return cmp;
                 } else {
-                    continue
+                    continue;
                 }
             }
         }

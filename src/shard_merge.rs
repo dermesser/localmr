@@ -73,20 +73,29 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
         }
     }
 
-    pub fn build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt) -> ShardMergeIterator<'a, T>
-        where T: 'a, It: 'a {
-            ShardMergeIterator::_build(sources, None)
+    pub fn build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt)
+                                                                    -> ShardMergeIterator<'a, T>
+        where T: 'a,
+              It: 'a
+    {
+        ShardMergeIterator::_build(sources, None)
     }
-    
-    pub fn build_with_cmp<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: sort::Comparer<T>) -> ShardMergeIterator<'a, T>
-        where T: 'a, It: 'a {
-            ShardMergeIterator::_build(sources, Some(cmp))
+
+    pub fn build_with_cmp<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>
+        (sources: &mut ItIt,
+         cmp: sort::Comparer<T>)
+         -> ShardMergeIterator<'a, T>
+        where T: 'a,
+              It: 'a
+    {
+        ShardMergeIterator::_build(sources, Some(cmp))
     }
 
     /// Takes multiple iterators of type It and generates one ShardedMergeIterator..
     /// (yes, iterator over a collection of iterators).
-    fn _build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt, cmp: Option<sort::Comparer<T>>)
-                                                                    -> ShardMergeIterator<'a, T>
+    fn _build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt,
+                                                                 cmp: Option<sort::Comparer<T>>)
+                                                                 -> ShardMergeIterator<'a, T>
         where T: 'a,
               It: 'a
     {
@@ -126,19 +135,25 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
     fn compare(&self, a: &T, b: &T) -> Ordering {
         match self.comparer {
             None => a.cmp(b),
-            Some(f) => f(a, b)
+            Some(f) => f(a, b),
         }
     }
 
     /// Merge multiple ShardMergeIterators, recursively (meaning it will result in a more or less
     /// balanced merge sort tree).
-    fn merge(mut its: Vec<ShardMergeIterator<'a, T>>, cmp: Option<sort::Comparer<T>>) -> ShardMergeIterator<'a, T>
+    fn merge(mut its: Vec<ShardMergeIterator<'a, T>>,
+             cmp: Option<sort::Comparer<T>>)
+             -> ShardMergeIterator<'a, T>
         where T: 'a
     {
         if its.len() == 0 {
             ShardMergeIterator::default()
         } else if its.len() == 1 {
-            ShardMergeIterator { left: Box::new(its.remove(0)), comparer: cmp, ..ShardMergeIterator::default() }
+            ShardMergeIterator {
+                left: Box::new(its.remove(0)),
+                comparer: cmp,
+                ..ShardMergeIterator::default()
+            }
         } else if its.len() == 2 {
             let it1 = its.remove(0);
             let it2 = its.remove(0);
@@ -224,8 +239,10 @@ mod tests {
             files.push(lines::new_from_file(&name).unwrap());
         }
 
-        let merge_it = ShardMergeIterator::build_with_cmp(&mut files.into_iter(), sort::dict_string_compare);
-        let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt")).unwrap();
+        let merge_it = ShardMergeIterator::build_with_cmp(&mut files.into_iter(),
+                                                          sort::dict_string_compare);
+        let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt"))
+                              .unwrap();
 
         for line in merge_it {
             let _ = outfile.write(line.as_bytes());
@@ -272,7 +289,7 @@ mod tests {
     }
 
     // Slow test!
-    //#[test]
+    // #[test]
     fn bench_sane_string_compare() {
         let cnv = String::from;
         let s1 = &cnv("");
