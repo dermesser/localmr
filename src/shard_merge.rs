@@ -18,7 +18,7 @@ pub struct ShardMergeIterator<'a, T: Ord> {
 
     left_peeked: Option<T>,
     right_peeked: Option<T>,
-    comparer: Option<sort::Comparer<T>>,
+    comparer: sort::Comparer<T>,
 }
 
 impl<'a, T: Ord + Clone> Iterator for ShardMergeIterator<'a, T> {
@@ -47,7 +47,7 @@ impl<'a, T: Ord + Clone> Iterator for ShardMergeIterator<'a, T> {
                 return r;
             }
             (Some(l), Some(r)) => {
-                let cmp = self.compare(&l, &r);
+                let cmp = (self.comparer)(&l, &r);
                 if cmp == Ordering::Less || cmp == Ordering::Equal {
                     self.left_peeked = None;
                     return Some(l);
@@ -69,7 +69,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             right: Box::new(iter::empty()),
             left_peeked: None,
             right_peeked: None,
-            comparer: None,
+            comparer: sort::default_generic_compare,
         }
     }
 
@@ -94,12 +94,13 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
     /// Takes multiple iterators of type It and generates one ShardedMergeIterator..
     /// (yes, iterator over a collection of iterators).
     fn _build<It: Iterator<Item = T>, ItIt: Iterator<Item = It>>(sources: &mut ItIt,
-                                                                 cmp: Option<sort::Comparer<T>>)
+                                                                 cmp_o: Option<sort::Comparer<T>>)
                                                                  -> ShardMergeIterator<'a, T>
         where T: 'a,
               It: 'a
     {
         let mut merged: Vec<ShardMergeIterator<T>> = Vec::new();
+        let cmp_fn = cmp_o.unwrap_or(sort::default_generic_compare);
 
         // Initial merging: Merge pairs of input iterators together.
         loop {
@@ -113,7 +114,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
                     merged.push(ShardMergeIterator {
                         left: Box::new(src1),
                         right: Box::new(iter::empty()),
-                        comparer: cmp,
+                        comparer: cmp_fn,
                         ..ShardMergeIterator::default()
                     })
                 }
@@ -121,7 +122,7 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
                     merged.push(ShardMergeIterator {
                         left: Box::new(src1),
                         right: Box::new(src),
-                        comparer: cmp,
+                        comparer: cmp_fn,
                         ..ShardMergeIterator::default()
                     })
                 }
@@ -129,20 +130,13 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
         }
 
         // Recursively build the merge tree from the leaves.
-        ShardMergeIterator::merge(merged, cmp)
-    }
-
-    fn compare(&self, a: &T, b: &T) -> Ordering {
-        match self.comparer {
-            None => a.cmp(b),
-            Some(f) => f(a, b),
-        }
+        ShardMergeIterator::merge(merged, cmp_fn)
     }
 
     /// Merge multiple ShardMergeIterators, recursively (meaning it will result in a more or less
     /// balanced merge sort tree).
     fn merge(mut its: Vec<ShardMergeIterator<'a, T>>,
-             cmp: Option<sort::Comparer<T>>)
+             cmp: sort::Comparer<T>)
              -> ShardMergeIterator<'a, T>
         where T: 'a
     {
