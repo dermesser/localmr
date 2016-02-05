@@ -71,20 +71,6 @@ impl<Src: Read> Iterator for LinesReader<Src> {
     }
 }
 
-/// An MRSinkGenerator type that uses a simple path as base
-/// and creates text files based on it.
-pub struct LinesSinkGenerator {
-    basepath: String,
-}
-
-impl LinesSinkGenerator {
-    /// Use either a path like `/a/b/c/` to generate files in a directory
-    /// or `/a/b/c/file_prefix_` to create files with that prefix.
-    pub fn new(path: &String) -> LinesSinkGenerator {
-        LinesSinkGenerator { basepath: path.clone() }
-    }
-}
-
 /// Writer that separates the chunks written by '\n' characters.
 pub struct LinesWriter {
     file: fs::File,
@@ -106,6 +92,20 @@ impl io::Write for LinesWriter {
     }
 }
 
+/// An MRSinkGenerator type that uses a simple path as base
+/// and creates text files based on it.
+pub struct LinesSinkGenerator {
+    basepath: String,
+}
+
+impl LinesSinkGenerator {
+    /// Use either a path like `/a/b/c/` to generate files in a directory
+    /// or `/a/b/c/file_prefix_` to create files with that prefix.
+    pub fn new(path: &String) -> LinesSinkGenerator {
+        LinesSinkGenerator { basepath: path.clone() }
+    }
+}
+
 impl util::MRSinkGenerator for LinesSinkGenerator {
     type Sink = LinesWriter;
     fn new_output(&mut self, name: &String) -> Self::Sink {
@@ -118,6 +118,7 @@ impl util::MRSinkGenerator for LinesSinkGenerator {
         }
     }
 }
+
 
 #[cfg(test)]
 mod test {
