@@ -1,9 +1,11 @@
 //! Implements the Reduce phase.
 //!
 
+use std::iter::Peekable;
+
+use formats::util::MRSinkGenerator;
 use mapreducer::MapReducer;
 use parameters::MRParameters;
-use formats::util::MRSinkGenerator;
 use record_types::{Record, MultiRecord, REmitter};
 use shard_merge::ShardMergeIterator;
 
@@ -63,8 +65,6 @@ impl<MR: MapReducer, InputIt: Iterator<Item=Record>, SinkGen: MRSinkGenerator> R
         }
     }
 }
-
-use std::iter::Peekable;
 
 /// Iterator adapter: Converts an Iterator<Item=Record> into an Iterator<Item=MultiRecord> by
 /// grouping subsequent records with identical key.

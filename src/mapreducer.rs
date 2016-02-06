@@ -1,6 +1,7 @@
 //! The MapReducer trait and associated types.
 
 use record_types::{REmitter, MEmitter, Record, MultiRecord};
+
 use std::clone::Clone;
 use std::hash::{Hasher, SipHasher};
 

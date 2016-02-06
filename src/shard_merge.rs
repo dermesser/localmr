@@ -4,10 +4,10 @@
 
 #![allow(dead_code)]
 
-use sort;
-
 use std::cmp::{Ord, Ordering};
 use std::iter;
+
+use sort;
 
 /// See module description.
 /// This type uses dynamic instead of static dispatch because it realizes an arbitrary structure

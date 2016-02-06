@@ -3,13 +3,14 @@
 
 #![allow(dead_code)]
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::io::Write;
-use std::collections::BTreeMap;
-use mapreducer::MapReducer;
-use record_types::{Record, MEmitter};
-use parameters::MRParameters;
+
 use formats::util::MRSinkGenerator;
+use mapreducer::MapReducer;
+use parameters::MRParameters;
+use record_types::{Record, MEmitter};
 
 /// This is the base of the mapping phase. It contains an input
 /// and intermediary input and output forms.
