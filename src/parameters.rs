@@ -13,6 +13,8 @@ pub struct MRParameters {
     pub reduce_group_prealloc_size: usize,
     pub reduce_group_insensitive: bool,
 
+    pub reduce_output_shard_prefix: String,
+
     // Internal parameters
     pub shard_id: usize,
 }
@@ -26,6 +28,7 @@ impl MRParameters {
             map_partition_size: 100 * 1024 * 1024,
             reduce_group_prealloc_size: 1,
             reduce_group_insensitive: false,
+            reduce_output_shard_prefix: String::from("output_"),
             shard_id: 0,
         }
     }
@@ -75,6 +78,13 @@ impl MRParameters {
     pub fn set_reduce_group_opts(mut self, prealloc_size: usize, insensitive: bool) -> MRParameters {
         self.reduce_group_prealloc_size = prealloc_size;
         self.reduce_group_insensitive = insensitive;
+        self
+    }
+
+    /// Prefix for output files produced by the reduce phase.
+    /// Default: output_ (the id of the reduce shard will be appended to that string)
+    pub fn set_out_name(mut self, prefix: String) -> MRParameters {
+        self.reduce_output_shard_prefix = prefix;
         self
     }
 
