@@ -229,7 +229,7 @@ mod tests {
     use sort;
 
     // Slow test!
-    //#[test]
+    // #[test]
     fn test_merge_large_files() {
         let mut files = Vec::with_capacity(11);
 

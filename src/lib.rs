@@ -8,6 +8,7 @@ pub mod map;
 pub mod mapreducer;
 pub mod parameters;
 pub mod record_types;
+pub mod reduce;
 pub mod shard_merge;
 pub mod sort;
 
