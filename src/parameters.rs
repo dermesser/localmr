@@ -10,6 +10,8 @@ pub struct MRParameters {
 
     pub map_partition_size: usize,
 
+    pub reduce_group_size: usize,
+
     // Internal parameters
     pub shard_id: usize,
 }
@@ -21,6 +23,7 @@ impl MRParameters {
             mappers: 4,
             reducers: 4,
             map_partition_size: 100 * 1024 * 1024,
+            reduce_group_size: 1,
             shard_id: 0,
         }
     }
@@ -28,6 +31,8 @@ impl MRParameters {
     /// An implementation detail: When processing the data during the map phase, this
     /// parameter determines how many keys are processed in direct sequence. Heavily increasing
     /// this value increases memory usage.
+    ///
+    /// Default 256
     pub fn set_key_buffer_size(mut self, n: usize) -> MRParameters {
         self.key_buffer_size = n;
         self
@@ -36,6 +41,8 @@ impl MRParameters {
     /// Determines how many parallel processes will be run. Mappers and reducers do in general
     /// not run at the same time (as the reducers need to wait for the map output). The number of
     /// reducers also determines the sharding of the map output data.
+    ///
+    /// Default 4/4
     pub fn set_concurrency(mut self, mappers: usize, reducers: usize) -> MRParameters {
         self.mappers = mappers;
         self.reducers = reducers;
@@ -48,12 +55,24 @@ impl MRParameters {
     /// In general: All input data of one chunk will be in memory; all output data will be in
     /// memory, too; but both are not in memory at the full size at the same time (as input data
     /// are consumed the output data builds up, and the memory taken up by the former is released).
+    ///
+    /// Default 100 MiB
     pub fn set_partition_size(mut self, size: usize) -> MRParameters {
         self.map_partition_size = size;
         self
     }
 
+    /// How big are the groups of keys in the reduce phase expected to be? (used for pre-allocating
+    /// buffers)
+    ///
+    /// Default 1.
+    pub fn set_reduce_group_size(mut self, size: usize) -> MRParameters {
+        self.reduce_group_size = size;
+        self
+    }
+
     /// For internal use: Sets the ID of the executing data chunk (for file naming etc.)
+    ///
     pub fn set_shard_id(mut self, n: usize) -> MRParameters {
         self.shard_id = n;
         self
