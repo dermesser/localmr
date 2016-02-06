@@ -10,7 +10,8 @@ pub struct MRParameters {
 
     pub map_partition_size: usize,
 
-    pub reduce_group_size: usize,
+    pub reduce_group_prealloc_size: usize,
+    pub reduce_group_insensitive: bool,
 
     // Internal parameters
     pub shard_id: usize,
@@ -23,7 +24,8 @@ impl MRParameters {
             mappers: 4,
             reducers: 4,
             map_partition_size: 100 * 1024 * 1024,
-            reduce_group_size: 1,
+            reduce_group_prealloc_size: 1,
+            reduce_group_insensitive: false,
             shard_id: 0,
         }
     }
@@ -62,12 +64,17 @@ impl MRParameters {
         self
     }
 
-    /// How big are the groups of keys in the reduce phase expected to be? (used for pre-allocating
+    /// prealloc_size: How big are the groups of keys in the reduce phase expected to be? (used for pre-allocating
     /// buffers)
-    ///
     /// Default 1.
-    pub fn set_reduce_group_size(mut self, size: usize) -> MRParameters {
-        self.reduce_group_size = size;
+    ///
+    /// insensitive: Whether to group strings together that differ in case.
+    /// BUG: This will not work correctly until the map phase delivers outputs in the correct order, i.e.
+    /// dictionary order. The default Ord implementation for String treats lower and upper case
+    /// very differently. Default: false.
+    pub fn set_reduce_group_opts(mut self, prealloc_size: usize, insensitive: bool) -> MRParameters {
+        self.reduce_group_prealloc_size = prealloc_size;
+        self.reduce_group_insensitive = insensitive;
         self
     }
 
