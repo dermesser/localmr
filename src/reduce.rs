@@ -17,18 +17,18 @@ struct ReducePartition<MR: MapReducer, InputIt: Iterator<Item = Record>, SinkGen
 }
 
 impl<MR: MapReducer, InputIt: Iterator<Item=Record>, SinkGen: MRSinkGenerator> ReducePartition<MR, InputIt, SinkGen> {
-    /// Create a new Reduce partition for the given MR; source and destination I/O.
-    /// mr is the map/reduce functions.
-    /// params is generic MR parameters as well as some applying directly to this reduce partition.
-    /// srcfiles is a set of Iterator<Item=Record>s. Those are usually reading from the map phase's
-    /// outputs.
-    /// dstfiles is a SinkGen (as known from the mapping phase) that is used to create the output
-    /// file (there is one output file per reduce partition, currently).
+/// Create a new Reduce partition for the given MR; source and destination I/O.
+/// mr is the map/reduce functions.
+/// params is generic MR parameters as well as some applying directly to this reduce partition.
+/// srcfiles is a set of Iterator<Item=Record>s. Those are usually reading from the map phase's
+/// outputs.
+/// dstfiles is a SinkGen (as known from the mapping phase) that is used to create the output
+/// file (there is one output file per reduce partition, currently).
     pub fn new(mr: MR, params: MRParameters, srcfiles: Vec<InputIt>, dstfiles: SinkGen) -> ReducePartition<MR, InputIt, SinkGen> {
         ReducePartition { mr: mr, params: params, srcfiles: srcfiles, dstfilegen: dstfiles }
     }
 
-    /// Run the Reduce partition.
+/// Run the Reduce partition.
     pub fn _run(mut self) {
         let mut inputs = Vec::new();
         inputs.append(&mut self.srcfiles);
@@ -107,7 +107,8 @@ impl<It: Iterator<Item = Record>> Iterator for RecordsToMultiRecords<It> {
                 Some(r) => {
                     if !self.settings.reduce_group_insensitive && r.key != key {
                         break;
-                    } else if self.settings.reduce_group_insensitive && r.key[..].to_ascii_lowercase() != key {
+                    } else if self.settings.reduce_group_insensitive &&
+                       r.key[..].to_ascii_lowercase() != key {
                         break;
                     }
                 }
@@ -125,22 +126,23 @@ mod tests {
     use record_types::*;
     use std::vec;
 
-    fn get_records() -> Vec<Record>{
-        vec![
-            mk_rcrd("aaa", "def"),
-            mk_rcrd("abb", "111"),
-            mk_rcrd("Abb", "112"),
-            mk_rcrd("abbb", "113"),
-            mk_rcrd("abc", "xyz"),
-            mk_rcrd("xyz", "___"),
-            mk_rcrd("xyz", "__foo"),
-            mk_rcrd("xyz", "---")]
+    fn get_records() -> Vec<Record> {
+        vec![mk_rcrd("aaa", "def"),
+             mk_rcrd("abb", "111"),
+             mk_rcrd("Abb", "112"),
+             mk_rcrd("abbb", "113"),
+             mk_rcrd("abc", "xyz"),
+             mk_rcrd("xyz", "___"),
+             mk_rcrd("xyz", "__foo"),
+             mk_rcrd("xyz", "---")]
     }
 
     #[test]
     fn test_grouping_iterator() {
         let records = get_records();
-        let group_it: RecordsToMultiRecords<vec::IntoIter<Record>> = RecordsToMultiRecords::new(records.into_iter(), MRParameters::new().set_reduce_group_opts(2, true));
+        let group_it: RecordsToMultiRecords<vec::IntoIter<Record>> =
+            RecordsToMultiRecords::new(records.into_iter(),
+                                       MRParameters::new().set_reduce_group_opts(2, true));
 
         let lengths = vec![1, 2, 1, 1, 3];
         let mut i = 0;
@@ -154,7 +156,9 @@ mod tests {
     #[test]
     fn test_grouping_iterator_sensitive() {
         let records = get_records();
-        let group_it: RecordsToMultiRecords<vec::IntoIter<Record>> = RecordsToMultiRecords::new(records.into_iter(), MRParameters::new().set_reduce_group_opts(2, false));
+        let group_it: RecordsToMultiRecords<vec::IntoIter<Record>> =
+            RecordsToMultiRecords::new(records.into_iter(),
+                                       MRParameters::new().set_reduce_group_opts(2, false));
 
         let lengths = vec![1, 1, 1, 1, 1, 3];
         let mut i = 0;

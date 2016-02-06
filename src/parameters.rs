@@ -75,7 +75,10 @@ impl MRParameters {
     /// BUG: This will not work correctly until the map phase delivers outputs in the correct order, i.e.
     /// dictionary order. The default Ord implementation for String treats lower and upper case
     /// very differently. Default: false.
-    pub fn set_reduce_group_opts(mut self, prealloc_size: usize, insensitive: bool) -> MRParameters {
+    pub fn set_reduce_group_opts(mut self,
+                                 prealloc_size: usize,
+                                 insensitive: bool)
+                                 -> MRParameters {
         self.reduce_group_prealloc_size = prealloc_size;
         self.reduce_group_insensitive = insensitive;
         self
