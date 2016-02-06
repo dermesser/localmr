@@ -8,6 +8,11 @@ pub struct Record {
     pub value: String,
 }
 
+/// Shortcut for creating a record.
+pub fn mk_rcrd(k: &str, v: &str) -> Record {
+    Record { key: String::from(k), value: String::from(v) }
+}
+
 impl PartialOrd for Record {
     fn partial_cmp(&self, other: &Record) -> Option<Ordering> {
         Some(match self.key.cmp(&other.key) {
