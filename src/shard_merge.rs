@@ -69,6 +69,10 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             right: Box::new(iter::empty()),
             left_peeked: None,
             right_peeked: None,
+            // BUG: This should not be altered when used with Map phase output.
+            // The map phase uses a BTreeMap in order to sort the output, and the BTM
+            // only uses the standard Ord implementation for strings. Should the requirements
+            // change, we can work around that.
             comparer: sort::default_generic_compare,
         }
     }
@@ -222,9 +226,10 @@ mod tests {
     use formats::lines;
     use std::fmt;
     use std::io::Write;
+    use sort;
 
     // Slow test!
-    #[test]
+    //#[test]
     fn test_merge_large_files() {
         let mut files = Vec::with_capacity(11);
 
@@ -240,62 +245,6 @@ mod tests {
 
         for line in merge_it {
             let _ = outfile.write(line.as_bytes());
-        }
-    }
-
-    use std::cmp::Ordering;
-    use sort;
-
-    #[test]
-    fn test_sane_char_compare() {
-        assert_eq!(sort::sane_char_compare('a', 'B'), Ordering::Less);
-        assert_eq!(sort::sane_char_compare('a', 'a'), Ordering::Equal);
-        assert_eq!(sort::sane_char_compare('A', 'a'), Ordering::Greater);
-        assert_eq!(sort::sane_char_compare('B', 'a'), Ordering::Greater);
-    }
-
-    #[test]
-    fn test_sane_string_compare() {
-        let cnv = String::from;
-        let s1 = &cnv("");
-        let s2 = &cnv("0abc");
-        let s3 = &cnv("123");
-        let s4 = &cnv("abc");
-        let s5 = &cnv("Abc");
-        let s6 = &cnv("ABC");
-        let s7 = &cnv("aBC");
-
-        assert_eq!(sort::sane_string_compare(s1, s2), Ordering::Less);
-        assert_eq!(sort::sane_string_compare(s2, s3), Ordering::Less);
-        assert_eq!(sort::sane_string_compare(s3, s2), Ordering::Greater);
-        assert_eq!(sort::sane_string_compare(s2, s2), Ordering::Equal);
-        assert_eq!(sort::sane_string_compare(s4, s5), Ordering::Less);
-        assert_eq!(sort::sane_string_compare(s5, s6), Ordering::Less);
-        assert_eq!(sort::sane_string_compare(s6, s7), Ordering::Greater);
-    }
-
-    #[inline]
-    fn bogus_fn(o: Ordering) -> bool {
-        if o == Ordering::Equal {
-            panic!("bogus panic")
-        }
-        true
-    }
-
-    // Slow test!
-    // #[test]
-    fn bench_sane_string_compare() {
-        let cnv = String::from;
-        let s1 = &cnv("");
-        let s2 = &cnv("0abc");
-        let s3 = &cnv("123");
-        let s4 = &cnv("abc");
-        let s5 = &cnv("Abc");
-
-        for _ in 0..50000000 {
-            bogus_fn(sort::sane_string_compare(s1, s2));
-            bogus_fn(sort::sane_string_compare(s4, s3));
-            bogus_fn(sort::sane_string_compare(s4, s5));
         }
     }
 }
