@@ -30,10 +30,16 @@ impl Ord for Record {
 /// Can be easily iterated over, e.g. in a `for` loop.
 pub struct MultiRecord {
     key: String,
-    value: Box<Iterator<Item = String>>,
+    values: Vec<String>,
 }
 
 impl MultiRecord {
+    pub fn new(key: String, values: Vec<String>) -> MultiRecord {
+        MultiRecord {
+            key: key,
+            values: values,
+        }
+    }
     /// Retrieves the key of the record.
     pub fn key<'a>(&'a self) -> &'a String {
         &self.key
@@ -52,12 +58,14 @@ impl PartialOrd for MultiRecord {
     }
 }
 
+use std::vec;
+
 impl IntoIterator for MultiRecord {
     type Item = String;
-    type IntoIter = Box<Iterator<Item=String>>;
+    type IntoIter = vec::IntoIter<String>;
     /// Allows iterating over all the values.
     fn into_iter(self) -> Self::IntoIter {
-        self.value
+        self.values.into_iter()
     }
 }
 
