@@ -63,7 +63,10 @@ impl<MR: MapReducer, InputIt: Iterator<Item=Record>, SinkGen: MRSinkGenerator> R
             self.mr.reduce(&mut emitter, multirec);
 
             for result in emitter._get().into_iter() {
-                outp.write(result.as_bytes());
+                match outp.write(result.as_bytes()) {
+                    Err(e) => println!("WARN: While reducing shard #{}: {}", self.params.shard_id, e),
+                    Ok(_) => ()
+                }
             }
         }
     }
@@ -125,6 +128,9 @@ impl<It: Iterator<Item = Record>> Iterator for RecordsToMultiRecords<It> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use closure_mr::ClosureMapReducer;
+    use formats::lines::LinesSinkGenerator;
     use parameters::MRParameters;
     use record_types::*;
 
@@ -171,5 +177,33 @@ mod tests {
             assert_eq!(multirec.into_iter().count(), lengths[i]);
             i += 1;
         }
+    }
+
+    fn test_reducer(e: &mut REmitter, recs: MultiRecord) {
+        use std::fmt::Write;
+        use std::borrow::Borrow;
+
+        let mut out = String::with_capacity(32);
+        let _ = out.write_fmt(format_args!("{}:", recs.key()));
+
+        for val in recs {
+            let _ = out.write_str(" ");
+            let _ = out.write_str(val.borrow());
+        }
+
+        e.emit(out);
+    }
+
+    fn fake_mapper(_: &mut MEmitter, _: Record) {}
+
+    #[test]
+    fn test_reduce() {
+        let mr = ClosureMapReducer::new(fake_mapper, test_reducer);
+        let params = MRParameters::new().set_shard_id(42).set_reduce_group_opts(1, true);
+        let srcs = vec![get_records().into_iter()];
+        let dst = LinesSinkGenerator::new_to_files(&String::from("testdata/reduce_out_"));
+
+        let r = ReducePartition::new(mr, params, srcs, dst);
+        r._run();
     }
 }
