@@ -141,7 +141,7 @@ pub struct WriteLogReader {
 }
 
 impl WriteLogReader {
-    pub fn new(src: Box<Read+Send>) -> WriteLogReader {
+    pub fn new(src: Box<Read + Send>) -> WriteLogReader {
         WriteLogReader {
             src: src,
             records_read: 0,

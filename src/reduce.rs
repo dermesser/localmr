@@ -9,10 +9,7 @@ use parameters::MRParameters;
 use record_types::{Record, MultiRecord, REmitter};
 use shard_merge::ShardMergeIterator;
 
-pub struct ReducePartition<MR: MapReducer,
-                           InputIt: Iterator<Item = Record>,
-                           Sink: io::Write>
-{
+pub struct ReducePartition<MR: MapReducer, InputIt: Iterator<Item = Record>, Sink: io::Write> {
     mr: MR,
     params: MRParameters,
     // Maybe we want to genericize this to an Iterator<Item=Read> or so? This defers opening
@@ -21,19 +18,31 @@ pub struct ReducePartition<MR: MapReducer,
     dstfile: Sink,
 }
 
-impl<MR: MapReducer, InputIt: Iterator<Item=Record>, Sink: io::Write> ReducePartition<MR, InputIt, Sink> {
-/// Create a new Reduce partition for the given MR; source and destination I/O.
-/// mr is the map/reduce functions.
-/// params is generic MR parameters as well as some applying directly to this reduce partition.
-/// srcs is a set of Iterator<Item=Record>s. Those are usually reading from the map phase's
-/// outputs.
-/// dstfiles is a Sink (as known from the mapping phase) that is used to create the output
-/// file (there is one output file per reduce partition, currently).
-    pub fn new(mr: MR, params: MRParameters, srcs: Vec<InputIt>, outp: Sink) -> ReducePartition<MR, InputIt, Sink> {
-        ReducePartition { mr: mr, params: params, srcs: srcs, dstfile: outp}
+impl<MR: MapReducer, InputIt: Iterator<Item = Record>, Sink: io::Write> ReducePartition<MR,
+                                                                                        InputIt,
+                                                                                        Sink>
+    {
+    /// Create a new Reduce partition for the given MR; source and destination I/O.
+    /// mr is the map/reduce functions.
+    /// params is generic MR parameters as well as some applying directly to this reduce partition.
+    /// srcs is a set of Iterator<Item=Record>s. Those are usually reading from the map phase's
+    /// outputs.
+    /// dstfiles is a Sink (as known from the mapping phase) that is used to create the output
+    /// file (there is one output file per reduce partition, currently).
+    pub fn new(mr: MR,
+               params: MRParameters,
+               srcs: Vec<InputIt>,
+               outp: Sink)
+               -> ReducePartition<MR, InputIt, Sink> {
+        ReducePartition {
+            mr: mr,
+            params: params,
+            srcs: srcs,
+            dstfile: outp,
+        }
     }
 
-/// Run the Reduce partition.
+    /// Run the Reduce partition.
     pub fn _run(mut self) {
         let mut inputs = Vec::new();
         inputs.append(&mut self.srcs);
@@ -44,7 +53,7 @@ impl<MR: MapReducer, InputIt: Iterator<Item=Record>, Sink: io::Write> ReducePart
         self.reduce(RecordsToMultiRecords::new(ShardMergeIterator::build(&mut it), params))
     }
 
-    fn reduce<RecIt: Iterator<Item=Record>>(mut self, inp: RecordsToMultiRecords<RecIt>) {
+    fn reduce<RecIt: Iterator<Item = Record>>(mut self, inp: RecordsToMultiRecords<RecIt>) {
         use std::io::Write;
 
         for multirec in inp {
@@ -53,8 +62,12 @@ impl<MR: MapReducer, InputIt: Iterator<Item=Record>, Sink: io::Write> ReducePart
 
             for result in emitter._get().into_iter() {
                 match self.dstfile.write(result.as_bytes()) {
-                    Err(e) => println!("WARN: While reducing shard #{}: {}", self.params.shard_id, e),
-                    Ok(_) => ()
+                    Err(e) => {
+                        println!("WARN: While reducing shard #{}: {}",
+                                 self.params.shard_id,
+                                 e)
+                    }
+                    Ok(_) => (),
                 }
             }
         }
