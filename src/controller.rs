@@ -60,6 +60,7 @@ impl<MR: MapReducer + Send> MRController<MR> {
         };
         controller.run_map(inp);
         controller.run_reduce(out);
+        controller.clean_up();
     }
 
     fn map_runner(mr: MR, params: MRParameters, inp: LinkedList<Record>) {
@@ -140,5 +141,19 @@ impl<MR: MapReducer + Send> MRController<MR> {
                 });
             }
         });
+    }
+
+    fn clean_up(&self) {
+        use std::fs;
+        use std::fmt;
+
+        if !self.params.keep_temp_files {
+            for mpart in 0..self.map_partitions_run {
+                for rshard in 0..self.params.reducers {
+                    let name = fmt::format(format_args!("{}{}.{}", self.params.map_output_location, mpart, rshard));
+                    let _ = fs::remove_file(name);
+                }
+            }
+        }
     }
 }

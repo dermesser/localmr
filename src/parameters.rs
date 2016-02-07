@@ -14,6 +14,7 @@ pub struct MRParameters {
     pub reduce_group_insensitive: bool,
 
     pub map_output_location: String,
+    pub keep_temp_files: bool,
     pub reduce_output_shard_prefix: String,
 
     // Internal parameters
@@ -30,6 +31,7 @@ impl MRParameters {
             reduce_group_prealloc_size: 1,
             reduce_group_insensitive: false,
             map_output_location: String::from("map_intermediate_"),
+            keep_temp_files: false,
             reduce_output_shard_prefix: String::from("output_"),
             shard_id: 0,
         }
@@ -101,6 +103,15 @@ impl MRParameters {
                               -> MRParameters {
         self.map_output_location = map_out_prefix;
         self.reduce_output_shard_prefix = reduce_out_prefix;
+        self
+    }
+
+    /// If this is set to true, intermediate files, such as outputs from the map phase,
+    /// will be kept.
+    ///
+    /// Default: false
+    pub fn keep_temp_files(mut self, keep: bool) -> MRParameters {
+        self.keep_temp_files = keep;
         self
     }
 
