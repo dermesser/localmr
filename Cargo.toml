@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Lewin Bormann <lbo@spheniscida.de>"]
 
 [dependencies]
-time = "0.1.34"
+time = ">=0.1.34"
+scoped_threadpool = "0.1.*"
