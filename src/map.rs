@@ -97,8 +97,8 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
         for i in 0..self.params.reducers {
             let out = self.sink.new_output(&fmt::format(format_args!("{}{}.{}",
                                                                      self.params.map_output_location,
-                                                                     i,
-                                                                     self.params.shard_id)));
+                                                                     self.params.shard_id,
+                                                                     i)));
             outputs.push(out);
         }
         assert_eq!(outputs.len(), self.params.reducers);

@@ -39,7 +39,7 @@ fn open_reduce_inputs(params: &MRParameters,
     let mut inputs = Vec::new();
 
     for part in 0..partitions {
-        let name = fmt::format(format_args!("{}{}.{}", params.map_output_location, shard, part));
+        let name = fmt::format(format_args!("{}{}.{}", params.map_output_location, part, shard));
         let wlg_reader = WriteLogReader::new_from_file(&name).unwrap();
         inputs.push(RecordReadIterator::new(wlg_reader));
     }
