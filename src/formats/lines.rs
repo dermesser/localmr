@@ -72,18 +72,21 @@ impl<Src: Read> Iterator for LinesReader<Src> {
 }
 
 /// Writer that separates the chunks written by '\n' characters.
-pub struct LinesWriter {
-    file: fs::File,
+pub struct LinesWriter<W: io::Write> {
+    file: W,
 }
 
-impl LinesWriter {
-    pub fn new_to_file(path: &String) -> io::Result<LinesWriter> {
+impl<W: io::Write> LinesWriter<W> {
+    pub fn new_to_file(path: &String) -> io::Result<LinesWriter<fs::File>> {
         let f = try!(fs::OpenOptions::new().write(true).create(true).truncate(true).open(path));
         Ok(LinesWriter { file: f })
     }
+    pub fn new_to_write(w: W) -> LinesWriter<W> {
+        LinesWriter { file: w }
+    }
 }
 
-impl io::Write for LinesWriter {
+impl<W: io::Write> io::Write for LinesWriter<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.file.write(buf).and(self.file.write(&['\n' as u8]))
     }
@@ -101,13 +104,13 @@ pub struct LinesSinkGenerator {
 impl LinesSinkGenerator {
     /// Use either a path like `/a/b/c/` to generate files in a directory
     /// or `/a/b/c/file_prefix_` to create files with that prefix.
-    pub fn new(path: &String) -> LinesSinkGenerator {
+    pub fn new_to_files(path: &String) -> LinesSinkGenerator {
         LinesSinkGenerator { basepath: path.clone() }
     }
 }
 
 impl util::MRSinkGenerator for LinesSinkGenerator {
-    type Sink = LinesWriter;
+    type Sink = LinesWriter<fs::File>;
     fn new_output(&mut self, name: &String) -> Self::Sink {
         let mut path = self.basepath.clone();
         path.push_str(&name[..]);
@@ -118,7 +121,6 @@ impl util::MRSinkGenerator for LinesSinkGenerator {
         }
     }
 }
-
 
 #[cfg(test)]
 mod test {
