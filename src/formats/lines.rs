@@ -76,11 +76,14 @@ pub struct LinesWriter<W: io::Write> {
     file: W,
 }
 
-impl<W: io::Write> LinesWriter<W> {
+impl LinesWriter<fs::File> {
     pub fn new_to_file(path: &String) -> io::Result<LinesWriter<fs::File>> {
         let f = try!(fs::OpenOptions::new().write(true).create(true).truncate(true).open(path));
         Ok(LinesWriter { file: f })
     }
+}
+
+impl<W: io::Write> LinesWriter<W> {
     pub fn new_to_write(w: W) -> LinesWriter<W> {
         LinesWriter { file: w }
     }
@@ -165,7 +168,7 @@ mod test {
     #[test]
     fn test_write_lines() {
         let line = String::from("abc def hello world");
-        let mut gen = lines::LinesSinkGenerator::new(&String::from("test_output_"));
+        let mut gen = lines::LinesSinkGenerator::new_to_files(&String::from("test_output_"));
         let mut f = gen.new_output(&String::from("1"));
 
         for _ in 0..10 {

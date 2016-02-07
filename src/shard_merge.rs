@@ -224,9 +224,10 @@ mod tests {
     }
 
     use formats::lines;
-    use std::fmt;
-    use std::io::Write;
     use sort;
+    use std::fmt;
+    use std::fs;
+    use std::io::Write;
 
     // Slow test!
     // #[test]

@@ -184,7 +184,7 @@ mod tests {
 
 
     fn get_output() -> LinesSinkGenerator {
-        LinesSinkGenerator::new(&String::from("test_map_"))
+        LinesSinkGenerator::new_to_files(&String::from("test_map_"))
     }
 
     #[test]
