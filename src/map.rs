@@ -136,11 +136,11 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
 
             match e {
                 None => {
-                    self.sorted_output.insert(DictComparableString::wrap(r.key.clone()), vec![r.value]);
+                    self.sorted_output.insert(DictComparableString::wrap(r.key), vec![r.value]);
                 }
                 Some(mut v) => {
                     v.push(r.value);
-                    self.sorted_output.insert(DictComparableString::wrap(r.key.clone()), v);
+                    self.sorted_output.insert(DictComparableString::wrap(r.key), v);
                 }
             }
         }
