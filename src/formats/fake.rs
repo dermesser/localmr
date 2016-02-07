@@ -1,8 +1,5 @@
-use std::collections::BTreeMap;
-use std::io::BufWriter;
-use std::vec;
+#![allow(dead_code)]
 
-use record_types::*;
 use formats::util::MRSinkGenerator;
 
 pub struct BufWriterSinkGen {
@@ -12,7 +9,7 @@ pub struct BufWriterSinkGen {
 
 impl MRSinkGenerator for BufWriterSinkGen {
     type Sink = Vec<u8>;
-    fn new_output(&mut self, name: &String) -> Self::Sink {
+    fn new_output(&mut self, _: &String) -> Self::Sink {
         Vec::new()
     }
 }
