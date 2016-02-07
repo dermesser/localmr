@@ -226,7 +226,6 @@ mod tests {
     use formats::lines;
     use sort;
     use std::fmt;
-    use std::fs;
     use std::io::Write;
 
     // Slow test!
