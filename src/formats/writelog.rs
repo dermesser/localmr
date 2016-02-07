@@ -105,25 +105,23 @@ impl<Sink: Write> Write for WriteLogWriter<Sink> {
     }
 }
 
-/// Like LinesSinkGenerator, opens new WriteLog sinks based on a base path.
-/// The framework-supplied suffices are appended directly to the base path given
-/// to new(). (E.g. base = `/a/b/c`, input = `_shard1` => `/a/b/c_shard1`)
+/// Like LinesSinkGenerator, opens new WriteLogWriters that write
+/// to files with the name given to new_output(). That name is in general based on the MRParameters
+/// supplied to a mapreduce instance.
 pub struct WriteLogGenerator {
-    base: String,
+    i: i32,
 }
 
 impl WriteLogGenerator {
-    pub fn new(base: &String) -> WriteLogGenerator {
-        WriteLogGenerator { base: base.clone() }
+    pub fn new() -> WriteLogGenerator {
+        WriteLogGenerator { i: 0 }
     }
 }
 
 impl MRSinkGenerator for WriteLogGenerator {
     type Sink = WriteLogWriter<fs::File>;
-    fn new_output(&mut self, suffix: &String) -> Self::Sink {
-        let mut path = self.base.clone();
-        path.push_str(&suffix[..]);
-        let writer = WriteLogWriter::<fs::File>::new_to_file(&path, false);
+    fn new_output(&mut self, path: &String) -> Self::Sink {
+        let writer = WriteLogWriter::<fs::File>::new_to_file(path, false);
         match writer {
             Err(e) => panic!("Could not open {}: {}", path, e),
             Ok(w) => w,

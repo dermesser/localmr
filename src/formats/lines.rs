@@ -100,26 +100,26 @@ impl<W: io::Write> io::Write for LinesWriter<W> {
 
 /// An MRSinkGenerator type that uses a simple path as base
 /// and creates text files based on it.
+#[allow(dead_code)]
 pub struct LinesSinkGenerator {
-    basepath: String,
+    // bogus field
+    i: i32,
 }
 
 impl LinesSinkGenerator {
     /// Use either a path like `/a/b/c/` to generate files in a directory
     /// or `/a/b/c/file_prefix_` to create files with that prefix.
-    pub fn new_to_files(path: &String) -> LinesSinkGenerator {
-        LinesSinkGenerator { basepath: path.clone() }
+    pub fn new_to_files() -> LinesSinkGenerator {
+        LinesSinkGenerator { i: 0 }
     }
 }
 
 impl util::MRSinkGenerator for LinesSinkGenerator {
     type Sink = LinesWriter<fs::File>;
-    fn new_output(&mut self, name: &String) -> Self::Sink {
-        let mut path = self.basepath.clone();
-        path.push_str(&name[..]);
-        let f = fs::OpenOptions::new().write(true).truncate(true).create(true).open(path);
+    fn new_output(&mut self, p: &String) -> Self::Sink {
+        let f = fs::OpenOptions::new().write(true).truncate(true).create(true).open(p);
         match f {
-            Err(e) => panic!("Couldn't open lines output file {}: {}", name, e),
+            Err(e) => panic!("Couldn't open lines output file {}: {}", p, e),
             Ok(f) => return LinesWriter { file: f },
         }
     }
@@ -168,8 +168,8 @@ mod test {
     #[test]
     fn test_write_lines() {
         let line = String::from("abc def hello world");
-        let mut gen = lines::LinesSinkGenerator::new_to_files(&String::from("test_output_"));
-        let mut f = gen.new_output(&String::from("1"));
+        let mut gen = lines::LinesSinkGenerator::new_to_files();
+        let mut f = gen.new_output(&String::from("testdata/writelines_1"));
 
         for _ in 0..10 {
             let _ = f.write(line.as_bytes());
@@ -178,13 +178,13 @@ mod test {
         {
             assert_eq!(fs::OpenOptions::new()
                            .read(true)
-                           .open("test_output_1")
+                           .open("testdata/writelines_1")
                            .unwrap()
                            .metadata()
                            .unwrap()
                            .len(),
                        200);
         }
-        let _ = fs::remove_file("test_output_1");
+        let _ = fs::remove_file("testdata/writelines_1");
     }
 }

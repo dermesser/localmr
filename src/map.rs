@@ -185,13 +185,13 @@ mod tests {
 
 
     fn get_output() -> LinesSinkGenerator {
-        LinesSinkGenerator::new_to_files(&String::from("./"))
+        LinesSinkGenerator::new_to_files()
     }
 
     #[test]
     fn test_map_partition() {
-        use std::fmt::format;
-        use std::fs;
+        // use std::fmt::format;
+        // use std::fs;
 
         let reducers = 3;
         let mp = MapPartition::_new(MRParameters::new()
@@ -203,8 +203,8 @@ mod tests {
                                     get_output());
         mp._run();
 
-        for i in 0..reducers {
-            let filename = format(format_args!("test_map_mapout_0.{}", i));
+        for _ in 0..reducers {
+            // let filename = format(format_args!("testdata/map_im_{}", i));
             // let _ = fs::remove_file(filename);
         }
     }

@@ -199,9 +199,13 @@ mod tests {
     #[test]
     fn test_reduce() {
         let mr = ClosureMapReducer::new(fake_mapper, test_reducer);
-        let params = MRParameters::new().set_shard_id(42).set_reduce_group_opts(1, true);
+        let params = MRParameters::new()
+                         .set_shard_id(42)
+                         .set_reduce_group_opts(1, true)
+                         .set_file_locations(String::from("testdata/map_intermed_"),
+                                             String::from("testdata/result_"));
         let srcs = vec![get_records().into_iter()];
-        let dst = LinesSinkGenerator::new_to_files(&String::from("testdata/reduce_out_"));
+        let dst = LinesSinkGenerator::new_to_files();
 
         let r = ReducePartition::new(mr, params, srcs, dst);
         r._run();
