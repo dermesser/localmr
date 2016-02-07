@@ -10,7 +10,10 @@ pub struct Record {
 
 /// Shortcut for creating a record.
 pub fn mk_rcrd(k: &str, v: &str) -> Record {
-    Record { key: String::from(k), value: String::from(v) }
+    Record {
+        key: String::from(k),
+        value: String::from(v),
+    }
 }
 
 impl PartialOrd for Record {
