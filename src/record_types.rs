@@ -1,6 +1,8 @@
 use std::collections::LinkedList;
 use std::cmp::{Eq, PartialEq, Ordering, PartialOrd};
 
+use sort;
+
 /// A (key,value) pair.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Record {
@@ -18,8 +20,8 @@ pub fn mk_rcrd(k: &str, v: &str) -> Record {
 
 impl PartialOrd for Record {
     fn partial_cmp(&self, other: &Record) -> Option<Ordering> {
-        Some(match self.key.cmp(&other.key) {
-            Ordering::Equal => self.value.cmp(&other.value),
+        Some(match sort::dict_string_compare(&self.key, &other.key) {
+            Ordering::Equal => sort::dict_string_compare(&self.value, &other.value),
             o => o,
         })
     }
@@ -27,8 +29,8 @@ impl PartialOrd for Record {
 
 impl Ord for Record {
     fn cmp(&self, other: &Record) -> Ordering {
-        match self.key.cmp(&other.key) {
-            Ordering::Equal => self.value.cmp(&other.value),
+        match sort::dict_string_compare(&self.key, &other.key) {
+            Ordering::Equal => sort::dict_string_compare(&self.key, &other.value),
             o => o,
         }
     }
@@ -62,7 +64,7 @@ impl PartialEq for MultiRecord {
 
 impl PartialOrd for MultiRecord {
     fn partial_cmp(&self, other: &MultiRecord) -> Option<Ordering> {
-        Some(self.key.cmp(&other.key))
+        Some(sort::dict_string_compare(&self.key, &other.key))
     }
 }
 
