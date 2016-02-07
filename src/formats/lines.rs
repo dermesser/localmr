@@ -98,13 +98,16 @@ impl<W: io::Write> io::Write for LinesWriter<W> {
     }
 }
 
-/// An MRSinkGenerator type that uses a simple path as base
+/// An SinkGenerator type that uses a simple path as base
 /// and creates text files based on it.
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct LinesSinkGenerator {
     // bogus field
     i: i32,
 }
+
+unsafe impl Send for LinesSinkGenerator {}
 
 impl LinesSinkGenerator {
     /// Use either a path like `/a/b/c/` to generate files in a directory
@@ -114,9 +117,9 @@ impl LinesSinkGenerator {
     }
 }
 
-impl util::MRSinkGenerator for LinesSinkGenerator {
+impl util::SinkGenerator for LinesSinkGenerator {
     type Sink = LinesWriter<fs::File>;
-    fn new_output(&mut self, p: &String) -> Self::Sink {
+    fn new_output(&self, p: &String) -> Self::Sink {
         let f = fs::OpenOptions::new().write(true).truncate(true).create(true).open(p);
         match f {
             Err(e) => panic!("Couldn't open lines output file {}: {}", p, e),
@@ -128,7 +131,7 @@ impl util::MRSinkGenerator for LinesSinkGenerator {
 #[cfg(test)]
 mod test {
     use formats::lines;
-    use formats::util::MRSinkGenerator;
+    use formats::util::SinkGenerator;
     use std::fs;
     use std::io::Write;
 
@@ -168,7 +171,7 @@ mod test {
     #[test]
     fn test_write_lines() {
         let line = String::from("abc def hello world");
-        let mut gen = lines::LinesSinkGenerator::new_to_files();
+        let gen = lines::LinesSinkGenerator::new_to_files();
         let mut f = gen.new_output(&String::from("testdata/writelines_1"));
 
         for _ in 0..10 {

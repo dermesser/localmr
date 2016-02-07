@@ -3,6 +3,7 @@
 //!
 
 pub mod closure_mr;
+pub mod controller;
 pub mod formats;
 pub mod map;
 pub mod mapreducer;

@@ -1,9 +1,9 @@
 //! Implements the Reduce phase.
 //!
 
+use std::io;
 use std::iter::Peekable;
 
-use formats::util::MRSinkGenerator;
 use mapreducer::MapReducer;
 use parameters::MRParameters;
 use record_types::{Record, MultiRecord, REmitter};
@@ -11,26 +11,26 @@ use shard_merge::ShardMergeIterator;
 
 pub struct ReducePartition<MR: MapReducer,
                            InputIt: Iterator<Item = Record>,
-                           SinkGen: MRSinkGenerator>
+                           Sink: io::Write>
 {
     mr: MR,
     params: MRParameters,
     // Maybe we want to genericize this to an Iterator<Item=Read> or so? This defers opening
     // the files to the reduce shard itself.
     srcs: Vec<InputIt>,
-    dstfilegen: SinkGen,
+    dstfile: Sink,
 }
 
-impl<MR: MapReducer, InputIt: Iterator<Item=Record>, SinkGen: MRSinkGenerator> ReducePartition<MR, InputIt, SinkGen> {
+impl<MR: MapReducer, InputIt: Iterator<Item=Record>, Sink: io::Write> ReducePartition<MR, InputIt, Sink> {
 /// Create a new Reduce partition for the given MR; source and destination I/O.
 /// mr is the map/reduce functions.
 /// params is generic MR parameters as well as some applying directly to this reduce partition.
 /// srcs is a set of Iterator<Item=Record>s. Those are usually reading from the map phase's
 /// outputs.
-/// dstfiles is a SinkGen (as known from the mapping phase) that is used to create the output
+/// dstfiles is a Sink (as known from the mapping phase) that is used to create the output
 /// file (there is one output file per reduce partition, currently).
-    pub fn new(mr: MR, params: MRParameters, srcs: Vec<InputIt>, dstfiles: SinkGen) -> ReducePartition<MR, InputIt, SinkGen> {
-        ReducePartition { mr: mr, params: params, srcs: srcs, dstfilegen: dstfiles }
+    pub fn new(mr: MR, params: MRParameters, srcs: Vec<InputIt>, outp: Sink) -> ReducePartition<MR, InputIt, Sink> {
+        ReducePartition { mr: mr, params: params, srcs: srcs, dstfile: outp}
     }
 
 /// Run the Reduce partition.
@@ -44,26 +44,15 @@ impl<MR: MapReducer, InputIt: Iterator<Item=Record>, SinkGen: MRSinkGenerator> R
         self.reduce(RecordsToMultiRecords::new(ShardMergeIterator::build(&mut it), params))
     }
 
-    fn get_output_name(&self) -> String {
-        use std::fmt;
-        let mut name = String::new();
-        name.push_str(&self.params.reduce_output_shard_prefix[..]);
-        name.push_str(&fmt::format(format_args!("{}", self.params.shard_id))[..]);
-        name
-    }
-
     fn reduce<RecIt: Iterator<Item=Record>>(mut self, inp: RecordsToMultiRecords<RecIt>) {
         use std::io::Write;
-
-        let name = self.get_output_name();
-        let mut outp = self.dstfilegen.new_output(&name);
 
         for multirec in inp {
             let mut emitter = REmitter::new();
             self.mr.reduce(&mut emitter, multirec);
 
             for result in emitter._get().into_iter() {
-                match outp.write(result.as_bytes()) {
+                match self.dstfile.write(result.as_bytes()) {
                     Err(e) => println!("WARN: While reducing shard #{}: {}", self.params.shard_id, e),
                     Ok(_) => ()
                 }
@@ -131,6 +120,7 @@ mod tests {
 
     use closure_mr::ClosureMapReducer;
     use formats::lines::LinesSinkGenerator;
+    use formats::util::SinkGenerator;
     use parameters::MRParameters;
     use record_types::*;
 
@@ -207,7 +197,7 @@ mod tests {
         let srcs = vec![get_records().into_iter()];
         let dst = LinesSinkGenerator::new_to_files();
 
-        let r = ReducePartition::new(mr, params, srcs, dst);
+        let r = ReducePartition::new(mr, params, srcs, dst.new_output(&String::from("0")));
         r._run();
     }
 }

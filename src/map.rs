@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::io::Write;
 
-use formats::util::MRSinkGenerator;
+use formats::util::SinkGenerator;
 use mapreducer::MapReducer;
 use parameters::MRParameters;
 use record_types::{Record, MEmitter};
@@ -16,7 +16,7 @@ use record_types::{Record, MEmitter};
 /// and intermediary input and output forms.
 /// Mapper threads run on this. Every mapper thread has one MapPartition
 /// instance per input chunk.
-struct MapPartition<MR: MapReducer, MapInput: Iterator<Item = Record>, SinkGen: MRSinkGenerator> {
+pub struct MapPartition<MR: MapReducer, MapInput: Iterator<Item = Record>, SinkGen: SinkGenerator> {
     mr: MR,
     params: MRParameters,
     input: MapInput,
@@ -25,7 +25,7 @@ struct MapPartition<MR: MapReducer, MapInput: Iterator<Item = Record>, SinkGen: 
     sorted_output: BTreeMap<String, Vec<String>>,
 }
 
-impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: MRSinkGenerator> MapPartition<MR, MapInput, SinkGen> {
+impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> MapPartition<MR, MapInput, SinkGen> {
     pub fn _new(params: MRParameters,
                 input: MapInput,
                 mr: MR,
@@ -149,7 +149,7 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: MRSinkGenerator> 
 #[cfg(test)]
 mod tests {
     use closure_mr::ClosureMapReducer;
-    use formats::util::RecordIterator;
+    use formats::util::PosRecordIterator;
     use formats::lines::LinesSinkGenerator;
     use map::MapPartition;
     use record_types::{MEmitter, REmitter, Record, MultiRecord};
@@ -179,7 +179,7 @@ mod tests {
                                    .iter()
                                    .map(move |s| String::from(*s))
                                    .collect();
-        let ri: RecordIterator<_> = RecordIterator::new(inp.into_iter());
+        let ri: PosRecordIterator<_> = PosRecordIterator::new(inp.into_iter());
         ri.collect()
     }
 

@@ -10,7 +10,7 @@ use std::fs;
 use std::vec;
 use std::string;
 
-use formats::util::MRSinkGenerator;
+use formats::util::SinkGenerator;
 
 /// A length-prefixed record stream named for the original use case,
 /// which was to write a log of all write operations to a database.
@@ -108,9 +108,12 @@ impl<Sink: Write> Write for WriteLogWriter<Sink> {
 /// Like LinesSinkGenerator, opens new WriteLogWriters that write
 /// to files with the name given to new_output(). That name is in general based on the MRParameters
 /// supplied to a mapreduce instance.
+#[derive(Clone)]
 pub struct WriteLogGenerator {
     i: i32,
 }
+
+unsafe impl Send for WriteLogGenerator {}
 
 impl WriteLogGenerator {
     pub fn new() -> WriteLogGenerator {
@@ -118,9 +121,9 @@ impl WriteLogGenerator {
     }
 }
 
-impl MRSinkGenerator for WriteLogGenerator {
+impl SinkGenerator for WriteLogGenerator {
     type Sink = WriteLogWriter<fs::File>;
-    fn new_output(&mut self, path: &String) -> Self::Sink {
+    fn new_output(&self, path: &String) -> Self::Sink {
         let writer = WriteLogWriter::<fs::File>::new_to_file(path, false);
         match writer {
             Err(e) => panic!("Could not open {}: {}", path, e),
@@ -138,7 +141,7 @@ pub struct WriteLogReader {
 }
 
 impl WriteLogReader {
-    pub fn new(src: Box<Read>) -> WriteLogReader {
+    pub fn new(src: Box<Read+Send>) -> WriteLogReader {
         WriteLogReader {
             src: src,
             records_read: 0,
