@@ -2,4 +2,5 @@
 
 pub mod lines;
 pub mod writelog;
+pub mod fake;
 pub mod util;
