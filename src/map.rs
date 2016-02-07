@@ -95,9 +95,10 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: MRSinkGenerator> 
         let mut outputs = Vec::new();
 
         for i in 0..self.params.reducers {
-            let out = self.sink.new_output(&fmt::format(format_args!("mapout_{}.{}",
-                                                                     self.params.shard_id,
-                                                                     i)));
+            let out = self.sink.new_output(&fmt::format(format_args!("{}{}.{}",
+                                                                     self.params.map_output_location,
+                                                                     i,
+                                                                     self.params.shard_id)));
             outputs.push(out);
         }
         assert_eq!(outputs.len(), self.params.reducers);
@@ -184,7 +185,7 @@ mod tests {
 
 
     fn get_output() -> LinesSinkGenerator {
-        LinesSinkGenerator::new_to_files(&String::from("test_map_"))
+        LinesSinkGenerator::new_to_files(&String::from("./"))
     }
 
     #[test]
@@ -193,7 +194,10 @@ mod tests {
         use std::fs;
 
         let reducers = 3;
-        let mp = MapPartition::_new(MRParameters::new().set_concurrency(4, reducers),
+        let mp = MapPartition::_new(MRParameters::new()
+                                        .set_concurrency(4, reducers)
+                                        .set_file_locations(String::from("testdata/map_im_"),
+                                                            String::from("testdata/result_")),
                                     get_input().into_iter(),
                                     get_mr(),
                                     get_output());
@@ -201,7 +205,7 @@ mod tests {
 
         for i in 0..reducers {
             let filename = format(format_args!("test_map_mapout_0.{}", i));
-            let _ = fs::remove_file(filename);
+            // let _ = fs::remove_file(filename);
         }
     }
 }

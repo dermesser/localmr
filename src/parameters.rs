@@ -13,6 +13,7 @@ pub struct MRParameters {
     pub reduce_group_prealloc_size: usize,
     pub reduce_group_insensitive: bool,
 
+    pub map_output_location: String,
     pub reduce_output_shard_prefix: String,
 
     // Internal parameters
@@ -28,6 +29,7 @@ impl MRParameters {
             map_partition_size: 100 * 1024 * 1024,
             reduce_group_prealloc_size: 1,
             reduce_group_insensitive: false,
+            map_output_location: String::from("map_intermediate_"),
             reduce_output_shard_prefix: String::from("output_"),
             shard_id: 0,
         }
@@ -85,10 +87,20 @@ impl MRParameters {
         self
     }
 
-    /// Prefix for output files produced by the reduce phase.
-    /// Default: output_ (the id of the reduce shard will be appended to that string)
-    pub fn set_out_name(mut self, prefix: String) -> MRParameters {
-        self.reduce_output_shard_prefix = prefix;
+    /// map_out_prefix: A location that can be used for intermediate map outputs. For example,
+    /// '/home/user/processing/tmp/'. (Note: Make sure that the location provides enough disk
+    /// space). Default: './output_' (will lead to ./output_0, ./output_1 etc.)
+    ///
+    /// reduce_out_prefix: Path prefix for output files produced by the reduce phase, for example
+    /// '/home/user/processing/output_'. (Note: Make sure that the location provides enough
+    /// disk space). Default: './map_intermediate_' (will lead to ./map_intermediate_0.0 etc.)
+    ///
+    pub fn set_file_locations(mut self,
+                              map_out_prefix: String,
+                              reduce_out_prefix: String)
+                              -> MRParameters {
+        self.map_output_location = map_out_prefix;
+        self.reduce_output_shard_prefix = reduce_out_prefix;
         self
     }
 
