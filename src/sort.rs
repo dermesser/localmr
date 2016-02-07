@@ -83,6 +83,40 @@ fn dict_char_compare(a: char, b: char) -> Ordering {
     a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase())
 }
 
+/// A wrapped string that uses a dictionary string comparison as Ord implementation.
+#[derive(PartialEq, Eq, Clone)]
+pub enum DictComparableString {
+    DCS(String),
+}
+
+impl DictComparableString {
+    pub fn wrap(s: String) -> DictComparableString {
+        DictComparableString::DCS(s)
+    }
+    pub fn unwrap(self) -> String {
+        let DictComparableString::DCS(s) = self;
+        s
+    }
+    pub fn as_ref(&self) -> &String {
+        let &DictComparableString::DCS(ref s) = self;
+        s
+    }
+}
+
+impl PartialOrd for DictComparableString {
+    fn partial_cmp(&self, other: &DictComparableString) -> Option<Ordering> {
+        let (&DictComparableString::DCS(ref a), &DictComparableString::DCS(ref b)) = (self, other);
+        Some(dict_string_compare(a, b))
+    }
+}
+
+impl Ord for DictComparableString {
+    fn cmp(&self, other: &DictComparableString) -> Ordering {
+        let (&DictComparableString::DCS(ref a), &DictComparableString::DCS(ref b)) = (self, other);
+        dict_string_compare(a, b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

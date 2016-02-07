@@ -210,7 +210,7 @@ mod tests {
         let srcs = vec![get_records().into_iter()];
         let dst = LinesSinkGenerator::new_to_files();
 
-        let r = ReducePartition::new(mr, params, srcs, dst.new_output(&String::from("0")));
+        let r = ReducePartition::new(mr, params, srcs, dst.new_output(&String::from("testdata/result_0")));
         r._run();
     }
 }

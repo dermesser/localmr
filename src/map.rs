@@ -11,6 +11,7 @@ use formats::util::SinkGenerator;
 use mapreducer::MapReducer;
 use parameters::MRParameters;
 use record_types::{Record, MEmitter};
+use sort::DictComparableString;
 
 /// This is the base of the mapping phase. It contains an input
 /// and intermediary input and output forms.
@@ -21,8 +22,8 @@ pub struct MapPartition<MR: MapReducer, MapInput: Iterator<Item = Record>, SinkG
     params: MRParameters,
     input: MapInput,
     sink: SinkGen,
-    sorted_input: BTreeMap<String, String>,
-    sorted_output: BTreeMap<String, Vec<String>>,
+    sorted_input: BTreeMap<DictComparableString, String>,
+    sorted_output: BTreeMap<DictComparableString, Vec<String>>,
 }
 
 impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> MapPartition<MR, MapInput, SinkGen> {
@@ -53,7 +54,7 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
             match self.input.next() {
                 None => break,
                 Some(record) => {
-                    self.sorted_input.insert(record.key, record.value);
+                    self.sorted_input.insert(DictComparableString::DCS(record.key), record.value);
                 }
             }
         }
@@ -77,7 +78,7 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
                 let mut e = MEmitter::new();
                 self.mr.map(&mut e,
                             Record {
-                                key: k.clone(),
+                                key: k.clone().unwrap(),
                                 value: val,
                             });
                 self.insert_result(e);
@@ -109,10 +110,10 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
         let mut outputs = self.setup_output();
 
         for (k, vs) in self.sorted_output.iter() {
-            let shard = self.mr.shard(self.params.reducers, k);
+            let shard = self.mr.shard(self.params.reducers, k.as_ref());
 
             for v in vs {
-                let r1 = outputs[shard].write(k.as_bytes());
+                let r1 = outputs[shard].write(k.as_ref().as_bytes());
                 match r1 {
                     Err(e) => panic!("couldn't write map output: {}", e),
                     Ok(_) => (),
@@ -130,16 +131,16 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
         for r in emitter._get() {
             let e;
             {
-                e = self.sorted_output.remove(&r.key);
+                e = self.sorted_output.remove(&DictComparableString::wrap(r.key.clone()));
             }
 
             match e {
                 None => {
-                    self.sorted_output.insert(r.key, vec![r.value]);
+                    self.sorted_output.insert(DictComparableString::wrap(r.key.clone()), vec![r.value]);
                 }
                 Some(mut v) => {
                     v.push(r.value);
-                    self.sorted_output.insert(r.key, v);
+                    self.sorted_output.insert(DictComparableString::wrap(r.key.clone()), v);
                 }
             }
         }
