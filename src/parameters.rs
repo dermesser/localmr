@@ -71,7 +71,8 @@ impl MRParameters {
     /// buffers)
     /// Default 1.
     ///
-    /// insensitive: Whether to group strings together that differ in case.
+    /// insensitive: Whether to group strings together that differ in case. When used, the first
+    /// encountered key will be supplied as key to the reduce function.
     /// BUG: This will not work correctly until the map phase delivers outputs in the correct order, i.e.
     /// dictionary order. The default Ord implementation for String treats lower and upper case
     /// very differently. Default: false.
