@@ -200,8 +200,12 @@ impl WriteLogReader {
                 Err(e) => return Err(e),
                 Ok(s) => {
                     if s == 0 {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData,
-                                                  "Could not read enough data"));
+                        if len > 0 {
+                            return Err(io::Error::new(io::ErrorKind::InvalidData,
+                                                      "Could not read enough data"));
+                        } else {
+                            return Ok(0)
+                        }
                     } else if off + s < len {
                         off += s;
                     } else {
