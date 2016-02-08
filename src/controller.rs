@@ -2,13 +2,13 @@
 
 use formats::util::{SinkGenerator, RecordReadIterator};
 use formats::writelog::{WriteLogGenerator, WriteLogReader};
+use input_cache::InputCache;
 use map::MapPartition;
 use mapreducer::MapReducer;
 use parameters::MRParameters;
 use record_types::Record;
 use reduce::ReducePartition;
 
-use std::collections::LinkedList;
 use std::sync::mpsc::sync_channel;
 
 extern crate scoped_threadpool;
@@ -63,30 +63,21 @@ impl<MR: MapReducer + Send> MRController<MR> {
         controller.clean_up();
     }
 
-    fn map_runner(mr: MR, params: MRParameters, inp: LinkedList<Record>) {
+    fn map_runner(mr: MR, params: MRParameters, inp: InputCache) {
         if inp.len() == 0 {
             return;
         }
         let intermed_out = WriteLogGenerator::new();
-        let map_part = MapPartition::_new(params, inp.into_iter(), mr, intermed_out);
+        let map_part = MapPartition::_new(params, inp, mr, intermed_out);
         map_part._run();
     }
 
     fn read_map_input<In: Iterator<Item = Record>>(it: &mut In,
                                                    approx_bytes: usize)
-                                                   -> LinkedList<Record> {
-        let mut ll = LinkedList::new();
-        let mut bytes_read: usize = 0;
+                                                   -> InputCache {
 
-        for r in it {
-            bytes_read += r.key.len() + r.value.len() + 4; // Heuristics :P
-            ll.push_back(r);
-
-            if bytes_read > approx_bytes {
-                break;
-            }
-        }
-        ll
+        let inp_cache = InputCache::from_iter(8192, approx_bytes, it);
+        inp_cache
     }
 
     fn run_map<In: Iterator<Item = Record>>(&mut self, mut input: In) {

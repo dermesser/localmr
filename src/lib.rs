@@ -5,13 +5,14 @@
 pub mod closure_mr;
 pub mod controller;
 pub mod formats;
-pub mod map;
+pub mod input_cache;
+mod map;
 pub mod mapreducer;
 pub mod parameters;
 pub mod record_types;
-pub mod reduce;
-pub mod shard_merge;
-pub mod sort;
+mod reduce;
+mod shard_merge;
+mod sort;
 
 #[test]
 fn it_works() {}
