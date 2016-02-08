@@ -14,7 +14,10 @@ pub struct InputCache {
 }
 
 impl InputCache {
-    pub fn from_iter<It: IntoIterator<Item = Record>>(chunk_length: usize, max_bytes: usize, it: It) -> Self {
+    pub fn from_iter<It: IntoIterator<Item = Record>>(chunk_length: usize,
+                                                      max_bytes: usize,
+                                                      it: It)
+                                                      -> Self {
         let mut chunklist = LinkedList::new();
         let mut chunk = Vec::with_capacity(chunk_length);
 
@@ -44,10 +47,18 @@ impl InputCache {
         }
 
         if chunklist.len() == 0 {
-            InputCache { len: 0, chunks_iter: LinkedList::new().into_iter(), chunk_iter: Vec::new().into_iter() }
+            InputCache {
+                len: 0,
+                chunks_iter: LinkedList::new().into_iter(),
+                chunk_iter: Vec::new().into_iter(),
+            }
         } else {
             let first_chunk_iterator = chunklist.pop_front().unwrap().into_iter();
-            InputCache { len: complete_length, chunks_iter: chunklist.into_iter(), chunk_iter: first_chunk_iterator }
+            InputCache {
+                len: complete_length,
+                chunks_iter: chunklist.into_iter(),
+                chunk_iter: first_chunk_iterator,
+            }
         }
     }
 
@@ -67,8 +78,8 @@ impl Iterator for InputCache {
             None => (),
             Some(chunk) => {
                 self.chunk_iter = chunk.into_iter();
-                return self.chunk_iter.next()
-            },
+                return self.chunk_iter.next();
+            }
         }
         None
     }

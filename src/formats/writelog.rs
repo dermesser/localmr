@@ -153,7 +153,9 @@ impl WriteLogReader {
         fs::OpenOptions::new()
             .read(true)
             .open(file)
-            .map(move |f| WriteLogReader::new(Box::new(io::BufReader::with_capacity(1024 * 1024, f))))
+            .map(move |f| {
+                WriteLogReader::new(Box::new(io::BufReader::with_capacity(1024 * 1024, f)))
+            })
     }
 
     /// Opens all files from a directory which end in suffix, and chains them together.
@@ -176,7 +178,10 @@ impl WriteLogReader {
                         println!("Error opening {:?}: {}", name, e);
                         continue;
                     }
-                    Ok(f) => reader = Box::new(reader.chain(io::BufReader::with_capacity(1024 * 1024, f))),
+                    Ok(f) => {
+                        reader = Box::new(reader.chain(io::BufReader::with_capacity(1024 * 1024,
+                                                                                    f)))
+                    }
                 }
             }
         }
@@ -204,7 +209,7 @@ impl WriteLogReader {
                             return Err(io::Error::new(io::ErrorKind::InvalidData,
                                                       "Could not read enough data"));
                         } else {
-                            return Ok(0)
+                            return Ok(0);
                         }
                     } else if off + s < len {
                         off += s;

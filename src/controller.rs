@@ -72,9 +72,7 @@ impl<MR: MapReducer + Send> MRController<MR> {
         map_part._run();
     }
 
-    fn read_map_input<In: Iterator<Item = Record>>(it: &mut In,
-                                                   approx_bytes: usize)
-                                                   -> InputCache {
+    fn read_map_input<In: Iterator<Item = Record>>(it: &mut In, approx_bytes: usize) -> InputCache {
 
         let inp_cache = InputCache::from_iter(8192, approx_bytes, it);
         inp_cache
@@ -141,7 +139,10 @@ impl<MR: MapReducer + Send> MRController<MR> {
         if !self.params.keep_temp_files {
             for mpart in 0..self.map_partitions_run {
                 for rshard in 0..self.params.reducers {
-                    let name = fmt::format(format_args!("{}{}.{}", self.params.map_output_location, mpart, rshard));
+                    let name = fmt::format(format_args!("{}{}.{}",
+                                                        self.params.map_output_location,
+                                                        mpart,
+                                                        rshard));
                     let _ = fs::remove_file(name);
                 }
             }
