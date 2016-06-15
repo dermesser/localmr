@@ -69,10 +69,6 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             right: Box::new(iter::empty()),
             left_peeked: None,
             right_peeked: None,
-            // BUG: This should not be altered when used with Map phase output.
-            // The map phase uses a BTreeMap in order to sort the output, and the BTM
-            // only uses the standard Ord implementation for strings. Should the requirements
-            // change, we can work around that.
             comparer: sort::default_generic_compare,
         }
     }

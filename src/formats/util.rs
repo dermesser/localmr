@@ -3,7 +3,6 @@
 
 use record_types::Record;
 use std::fmt;
-use std::io;
 
 /// Transforms an iterator<string> into an iterator<Record>. It yields
 /// records with the key being the position of the current record, starting with
@@ -67,18 +66,4 @@ impl<I: Iterator<Item = String>> Iterator for RecordReadIterator<I> {
             }
         }
     }
-}
-
-/// A type implementing SinkGenerator is used at the end of the reducer
-/// phase to write the output. Given a name, new() should return a new object
-/// that can be used to write the output of a reduce partition.
-/// Values are always written as a whole to the writer.
-///
-/// SinkGenerator types are used in general to determine the format of outputs; existing options
-/// are plain text files (LinesSinkGenerator) or length-prefixed binary files (WriteLogGenerator).
-pub trait SinkGenerator: Send + Clone {
-    type Sink: io::Write;
-    /// Return a new output identified by name. The existing sink generators use `name` to open
-    /// files with that name (or path).
-    fn new_output(&self, name: &String) -> Self::Sink;
 }

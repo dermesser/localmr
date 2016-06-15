@@ -1,7 +1,7 @@
 //! Controls the execution of a mapreduce instance.
 
-use formats::util::{SinkGenerator, RecordReadIterator};
-use formats::writelog::{WriteLogGenerator, WriteLogReader};
+use phases::output::{SinkGenerator, open_reduce_inputs, get_reduce_output_name};
+use formats::writelog::WriteLogGenerator;
 use input_cache::InputCache;
 use phases::map::MapPartition;
 use mapreducer::{Mapper, Reducer, Sharder};
@@ -22,30 +22,6 @@ pub struct MRController<M: Mapper, R: Reducer, S: Sharder> {
 
     // How many map partitions have been run?
     map_partitions_run: usize,
-}
-
-/// Calculates the name of a reduce output shard from the parameters.
-fn get_reduce_output_name(params: &MRParameters) -> String {
-    use std::fmt;
-    let mut name = String::new();
-    name.push_str(&params.reduce_output_shard_prefix[..]);
-    name.push_str(&fmt::format(format_args!("{}", params.shard_id))[..]);
-    name
-}
-
-fn open_reduce_inputs(params: &MRParameters,
-                      partitions: usize,
-                      shard: usize)
-                      -> Vec<RecordReadIterator<WriteLogReader>> {
-    use std::fmt;
-    let mut inputs = Vec::new();
-
-    for part in 0..partitions {
-        let name = fmt::format(format_args!("{}{}.{}", params.map_output_location, part, shard));
-        let wlg_reader = WriteLogReader::new_from_file(&name).unwrap();
-        inputs.push(RecordReadIterator::new(wlg_reader));
-    }
-    inputs
 }
 
 
@@ -120,7 +96,6 @@ impl<M: Mapper, R: Reducer, S: Sharder> MRController<M, R, S> {
     }
 
     fn read_map_input<In: Iterator<Item = Record>>(it: &mut In, approx_bytes: usize) -> InputCache {
-
         let inp_cache = InputCache::from_iter(8192, approx_bytes, it);
         inp_cache
     }
@@ -137,7 +112,7 @@ impl<M: Mapper, R: Reducer, S: Sharder> MRController<M, R, S> {
                 let output = outp.clone();
 
                 scope.execute(move || {
-                    let inputs = open_reduce_inputs(&params, map_partitions, i);
+                    let inputs = open_reduce_inputs(&params.map_output_location, map_partitions, i);
                     let output = output.new_output(&get_reduce_output_name(&params));
                     let reduce_part = ReducePartition::new(r, params, inputs, output);
                     reduce_part._run();

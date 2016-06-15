@@ -4,10 +4,9 @@
 #![allow(dead_code)]
 
 use std::collections::BTreeMap;
-use std::fmt;
 use std::io::Write;
 
-use formats::util::SinkGenerator;
+use phases::output::SinkGenerator;
 use mapreducer::{Mapper, Sharder};
 use parameters::MRParameters;
 use record_types::{Record, MEmitter};
@@ -104,11 +103,9 @@ impl<M: Mapper, S: Sharder, MapInput: Iterator<Item=Record>,
         let mut outputs = Vec::new();
 
         for i in 0..self.params.reducers {
-            let out = self.sink.new_output(
-                &fmt::format(format_args!("{}{}.{}",
-                                          self.params.map_output_location,
-                                          self.params.shard_id,
-                                          i)));
+            let out = self.sink.new_map_output(&self.params.map_output_location,
+                                               self.params.shard_id,
+                                               i);
             outputs.push(out);
         }
         assert_eq!(outputs.len(), self.params.reducers);

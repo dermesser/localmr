@@ -3,7 +3,7 @@
 //! using the RecordIterator from formats::util, the necessary key/value
 //! iterator can be implemented.
 
-use formats::util;
+use phases::output::SinkGenerator;
 use std::fs;
 use std::io;
 use std::io::{Read, BufRead};
@@ -102,10 +102,7 @@ impl<W: io::Write> io::Write for LinesWriter<W> {
 /// and creates text files based on it.
 #[allow(dead_code)]
 #[derive(Clone)]
-pub struct LinesSinkGenerator {
-    // bogus field
-    i: i32,
-}
+pub struct LinesSinkGenerator;
 
 unsafe impl Send for LinesSinkGenerator {}
 
@@ -113,11 +110,11 @@ impl LinesSinkGenerator {
     /// Use either a path like `/a/b/c/` to generate files in a directory
     /// or `/a/b/c/file_prefix_` to create files with that prefix.
     pub fn new_to_files() -> LinesSinkGenerator {
-        LinesSinkGenerator { i: 0 }
+        LinesSinkGenerator { }
     }
 }
 
-impl util::SinkGenerator for LinesSinkGenerator {
+impl SinkGenerator for LinesSinkGenerator {
     type Sink = LinesWriter<fs::File>;
     fn new_output(&self, p: &String) -> Self::Sink {
         let f = fs::OpenOptions::new().write(true).truncate(true).create(true).open(p);

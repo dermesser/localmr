@@ -10,7 +10,7 @@ use std::fs;
 use std::vec;
 use std::string;
 
-use formats::util::SinkGenerator;
+use phases::output::SinkGenerator;
 
 /// A length-prefixed record stream named for the original use case,
 /// which was to write a log of all write operations to a database.
