@@ -6,7 +6,7 @@
 use formats::util;
 use std::fs;
 use std::io;
-use std::io::{Read, Lines, BufRead};
+use std::io::{Read, BufRead};
 
 type LinesIterator<Src> = io::Lines<io::BufReader<Src>>;
 
