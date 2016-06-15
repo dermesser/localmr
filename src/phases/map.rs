@@ -158,7 +158,7 @@ mod tests {
     use closure_mr::ClosureMapReducer;
     use formats::util::PosRecordIterator;
     use formats::lines::LinesSinkGenerator;
-    use map::MapPartition;
+    use phases::map::MapPartition;
     use record_types::{MEmitter, REmitter, Record, MultiRecord};
     use parameters::MRParameters;
     use std::collections::LinkedList;
@@ -203,6 +203,7 @@ mod tests {
                                         .set_file_locations(String::from("testdata/map_im_"),
                                                             String::from("testdata/result_")),
                                     get_input().into_iter(),
+                                    get_mr(),
                                     get_mr(),
                                     get_output());
         mp._run();

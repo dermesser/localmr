@@ -128,7 +128,7 @@ impl SinkGenerator for LinesSinkGenerator {
 #[cfg(test)]
 mod test {
     use formats::lines;
-    use formats::util::SinkGenerator;
+    use phases::output::SinkGenerator;
     use std::fs;
     use std::io::Write;
 

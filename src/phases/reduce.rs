@@ -132,7 +132,7 @@ mod tests {
 
     use closure_mr::ClosureMapReducer;
     use formats::lines::LinesSinkGenerator;
-    use formats::util::SinkGenerator;
+    use phases::output::SinkGenerator;
     use parameters::MRParameters;
     use record_types::*;
 
