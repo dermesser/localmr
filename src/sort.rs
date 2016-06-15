@@ -105,16 +105,14 @@ impl DictComparableString {
 
 impl PartialOrd for DictComparableString {
     fn partial_cmp(&self, other: &DictComparableString) -> Option<Ordering> {
-        let (&DictComparableString::DCS(ref a),
-             &DictComparableString::DCS(ref b)) = (self, other);
+        let (&DictComparableString::DCS(ref a), &DictComparableString::DCS(ref b)) = (self, other);
         Some(dict_string_compare(a, b))
     }
 }
 
 impl Ord for DictComparableString {
     fn cmp(&self, other: &DictComparableString) -> Ordering {
-        let (&DictComparableString::DCS(ref a),
-             &DictComparableString::DCS(ref b)) = (self, other);
+        let (&DictComparableString::DCS(ref a), &DictComparableString::DCS(ref b)) = (self, other);
         dict_string_compare(a, b)
     }
 }

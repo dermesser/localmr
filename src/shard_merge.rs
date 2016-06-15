@@ -207,7 +207,7 @@ mod tests {
                                                      get_collection_4(),
                                                      get_collection_5(),
                                                      get_collection_6()]
-                                                    .into_iter());
+            .into_iter());
         let mut cmp = 0;
         let mut cnt = 0;
 
@@ -241,7 +241,7 @@ mod tests {
         let merge_it = ShardMergeIterator::build_with_cmp(&mut files.into_iter(),
                                                           sort::dict_string_compare);
         let mut outfile = lines::LinesWriter::new_to_file(&String::from("testdata/all_sorted.txt"))
-                              .unwrap();
+            .unwrap();
 
         for line in merge_it {
             let _ = outfile.write(line.as_bytes());

@@ -8,7 +8,7 @@ use std::fmt;
 use std::io::Write;
 
 use formats::util::SinkGenerator;
-use mapreducer::MapReducer;
+use mapreducer::{Mapper, Sharder};
 use parameters::MRParameters;
 use record_types::{Record, MEmitter};
 use sort::DictComparableString;
@@ -17,8 +17,13 @@ use sort::DictComparableString;
 /// and intermediary input and output forms.
 /// Mapper threads run on this. Every mapper thread has one MapPartition
 /// instance per input chunk.
-pub struct MapPartition<MR: MapReducer, MapInput: Iterator<Item = Record>, SinkGen: SinkGenerator> {
-    mr: MR,
+pub struct MapPartition<M: Mapper,
+                        S: Sharder,
+                        MapInput: Iterator<Item = Record>,
+                        SinkGen: SinkGenerator>
+{
+    m: M,
+    sharder: S,
     params: MRParameters,
     input: MapInput,
     sink: SinkGen,
@@ -26,14 +31,17 @@ pub struct MapPartition<MR: MapReducer, MapInput: Iterator<Item = Record>, SinkG
     sorted_output: BTreeMap<DictComparableString, Vec<String>>,
 }
 
-impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> MapPartition<MR, MapInput, SinkGen> {
+impl<M: Mapper, S: Sharder, MapInput: Iterator<Item=Record>,
+    SinkGen: SinkGenerator> MapPartition<M, S, MapInput, SinkGen> {
     pub fn _new(params: MRParameters,
                 input: MapInput,
-                mr: MR,
+                mapper: M,
+                sharder: S,
                 output: SinkGen)
-                -> MapPartition<MR, MapInput, SinkGen> {
+                -> MapPartition<M, S, MapInput, SinkGen> {
         MapPartition {
-            mr: mr,
+            m: mapper,
+            sharder: sharder,
             params: params,
             input: input,
             sink: output,
@@ -76,7 +84,7 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
                     Some(v) => val = v,
                 }
                 let mut e = MEmitter::new();
-                self.mr.map(&mut e,
+                self.m.map(&mut e,
                             Record {
                                 key: k.clone().unwrap(),
                                 value: val,
@@ -96,10 +104,11 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
         let mut outputs = Vec::new();
 
         for i in 0..self.params.reducers {
-            let out = self.sink.new_output(&fmt::format(format_args!("{}{}.{}",
-                                                                     self.params.map_output_location,
-                                                                     self.params.shard_id,
-                                                                     i)));
+            let out = self.sink.new_output(
+                &fmt::format(format_args!("{}{}.{}",
+                                          self.params.map_output_location,
+                                          self.params.shard_id,
+                                          i)));
             outputs.push(out);
         }
         assert_eq!(outputs.len(), self.params.reducers);
@@ -110,7 +119,7 @@ impl<MR: MapReducer, MapInput: Iterator<Item=Record>, SinkGen: SinkGenerator> Ma
         let mut outputs = self.setup_output();
 
         for (k, vs) in self.sorted_output.iter() {
-            let shard = self.mr.shard(self.params.reducers, k.as_ref());
+            let shard = self.sharder.shard(self.params.reducers, k.as_ref());
 
             for v in vs {
                 let r1 = outputs[shard].write(k.as_ref().as_bytes());
@@ -172,14 +181,11 @@ mod tests {
     }
 
     fn get_input() -> LinkedList<Record> {
-        let inp: Vec<String> = vec!["abc def",
-                                    "xy yz za",
-                                    "hello world",
-                                    "let's do this",
-                                    "foo bar baz"]
-                                   .iter()
-                                   .map(move |s| String::from(*s))
-                                   .collect();
+        let inp: Vec<String> =
+            vec!["abc def", "xy yz za", "hello world", "let's do this", "foo bar baz"]
+                .iter()
+                .map(move |s| String::from(*s))
+                .collect();
         let ri: PosRecordIterator<_> = PosRecordIterator::new(inp.into_iter());
         ri.collect()
     }

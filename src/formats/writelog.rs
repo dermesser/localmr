@@ -16,15 +16,15 @@ use formats::util::SinkGenerator;
 /// which was to write a log of all write operations to a database.
 ///
 /// # WriteLog
-/// 
+///
 /// WriteLog is a persistent data structure designed to be written to disk
 /// that is a sequence of bytestring.
 /// It can be read back in relatively efficiently and yields the same byte
 /// strings; on disk, it is represented as records prefixed by 4 byte
 /// big-endian length prefixes: `llllbbbbbbllllbbllllbbbbbbbbb...`
-/// 
+///
 /// Where l is a length byte and b are bytes of a bytestring.
-/// 
+///
 /// There is a special case of WriteLogs: The length-prefixing can be turned
 /// off in order to yield a better efficiency when encoding PCK files. Those
 /// files are indexed by IDX files describing offset and length of single entries,
@@ -88,8 +88,8 @@ impl<Sink: Write> Write for WriteLogWriter<Sink> {
         // BUG: May not account the length in a correct way if the length prefix
         // is written, but not the record.
         let result = self.dest
-                         .write(&encode_u32(buf.len() as u32)[0..4])
-                         .and(self.dest.write(buf));
+            .write(&encode_u32(buf.len() as u32)[0..4])
+            .and(self.dest.write(buf));
         match result {
             Err(_) => result,
             Ok(_) => {
@@ -179,8 +179,8 @@ impl WriteLogReader {
                         continue;
                     }
                     Ok(f) => {
-                        reader = Box::new(reader.chain(io::BufReader::with_capacity(1024 * 1024,
-                                                                                    f)))
+                        reader =
+                            Box::new(reader.chain(io::BufReader::with_capacity(1024 * 1024, f)))
                     }
                 }
             }
@@ -379,8 +379,8 @@ mod test {
 
     fn bench_a_writing() {
         let buf: vec::Vec<u8> = "aaabbbcccdddeeefffggghhhiiijjjkkklllmmmnnnoooppp"
-                                    .bytes()
-                                    .collect();
+            .bytes()
+            .collect();
 
         match WriteLogWriter::<fs::File>::new_to_file(&String::from("bench_file.wlg"), false) {
             Err(e) => panic!("{}", e),

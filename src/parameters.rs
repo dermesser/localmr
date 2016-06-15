@@ -22,6 +22,7 @@ pub struct MRParameters {
 }
 
 impl MRParameters {
+    /// Creates an instance with sane defaults.
     pub fn new() -> MRParameters {
         MRParameters {
             key_buffer_size: 256,
@@ -71,15 +72,14 @@ impl MRParameters {
         self
     }
 
-    /// prealloc_size: How big are the groups of keys in the reduce phase expected to be? (used for pre-allocating
-    /// buffers)
-    /// Default 1.
+    /// prealloc_size: How big are the groups of keys in the reduce phase expected to be?
+    /// (used for pre-allocating buffers). Default 1.
     ///
     /// insensitive: Whether to group strings together that differ in case. When used, the first
     /// encountered key will be supplied as key to the reduce function.
-    /// BUG: This will not work correctly until the map phase delivers outputs in the correct order, i.e.
-    /// dictionary order. The default Ord implementation for String treats lower and upper case
-    /// very differently. Default: false.
+    /// BUG: This will not work correctly until the map phase delivers outputs in the correct order,
+    /// i.e. dictionary order. The default Ord implementation for String treats lower and upper
+    /// case very differently. Default: false.
     pub fn set_reduce_group_opts(mut self,
                                  prealloc_size: usize,
                                  insensitive: bool)

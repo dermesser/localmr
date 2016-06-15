@@ -23,20 +23,31 @@ pub type ReducerF = fn(&mut REmitter, MultiRecord);
 /// the return value should be in [0; n).
 pub type SharderF = fn(usize, &String) -> usize;
 
-/// A type implementing map() and reduce() functions.
-/// The MapReducer is cloned once per mapper/reducer thread.
-pub trait MapReducer: Clone {
+pub trait Mapper: Send + Clone {
     /// Takes one <key,value> pair and an emitter.
     /// The emitter is used to yield results from the map phase.
-    fn map(&self, em: &mut MEmitter, record: Record);
+    ///
+    /// Note that this method takes a &mut self; you can use this to cache expensive objects
+    /// between runs (but not between shards!)
+    fn map(&mut self, em: &mut MEmitter, record: Record);
+}
+
+pub trait Reducer: Send + Clone {
     /// Takes one key and one or more values and emits one or more
     /// values.
-    fn reduce(&self, em: &mut REmitter, records: MultiRecord);
+    ///
+    /// Note that this method takes a &mut self; you can use this to cache expensive objects
+    /// between runs (but not between shards!)
+    fn reduce(&mut self, em: &mut REmitter, records: MultiRecord);
+}
 
+pub trait Sharder: Send + Clone {
     /// Determines how to map keys to (reduce) shards.
     /// Returns a number in [0; n) determining the shard the key belongs in.
     /// The default implementation uses a simple hash (SipHasher) and modulo.
-    fn shard(&self, n: usize, key: &String) -> usize {
+    fn shard(&mut self, n: usize, key: &String) -> usize {
         _std_shard(n, key)
     }
 }
+
+pub struct DefaultSharder;

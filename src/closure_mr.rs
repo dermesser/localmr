@@ -1,6 +1,6 @@
 //! A MapReducer that uses supplied map()/reduce() functions.
 
-use mapreducer::{MapReducer, MapperF, ReducerF, SharderF, _std_shard};
+use mapreducer::{Mapper, Reducer, Sharder, MapperF, ReducerF, SharderF, _std_shard};
 use record_types::{Record, MultiRecord, MEmitter, REmitter};
 
 /// This type implements the MapReducer trait. You can use it to provide your own functions to a
@@ -37,14 +37,18 @@ impl ClosureMapReducer {
     }
 }
 
-impl MapReducer for ClosureMapReducer {
-    fn map(&self, e: &mut MEmitter, r: Record) {
+impl Mapper for ClosureMapReducer {
+    fn map(&mut self, e: &mut MEmitter, r: Record) {
         (self.mapper)(e, r)
     }
-    fn reduce(&self, e: &mut REmitter, r: MultiRecord) {
+}
+impl Reducer for ClosureMapReducer {
+    fn reduce(&mut self, e: &mut REmitter, r: MultiRecord) {
         (self.reducer)(e, r)
     }
-    fn shard(&self, n: usize, k: &String) -> usize {
+}
+impl Sharder for ClosureMapReducer {
+    fn shard(&mut self, n: usize, k: &String) -> usize {
         (self.sharder)(n, k)
     }
 }
