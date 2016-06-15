@@ -27,9 +27,9 @@ pub trait SinkGenerator: Send + Clone {
 }
 
 pub fn open_reduce_inputs(location: &String,
-                      partitions: usize,
-                      shard: usize)
-                      -> Vec<RecordReadIterator<WriteLogReader>> {
+                          partitions: usize,
+                          shard: usize)
+                          -> Vec<RecordReadIterator<WriteLogReader>> {
     let mut inputs = Vec::new();
 
     for part in 0..partitions {

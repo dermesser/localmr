@@ -110,7 +110,7 @@ impl LinesSinkGenerator {
     /// Use either a path like `/a/b/c/` to generate files in a directory
     /// or `/a/b/c/file_prefix_` to create files with that prefix.
     pub fn new_to_files() -> LinesSinkGenerator {
-        LinesSinkGenerator { }
+        LinesSinkGenerator {}
     }
 }
 
