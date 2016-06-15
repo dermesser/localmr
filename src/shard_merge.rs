@@ -69,7 +69,9 @@ impl<'a, T: Ord + Clone> ShardMergeIterator<'a, T> {
             right: Box::new(iter::empty()),
             left_peeked: None,
             right_peeked: None,
-            comparer: sort::default_generic_compare,
+            // map output is sorted in dictionary order (Aa, aa, Ba) instead of numeric (Aa, Ba,
+            // aa)
+            comparer: sort::dict_string_compare,
         }
     }
 
