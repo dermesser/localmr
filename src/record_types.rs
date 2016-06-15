@@ -54,6 +54,10 @@ impl MultiRecord {
     pub fn key<'a>(&'a self) -> &'a String {
         &self.key
     }
+    /// Retrieves the values.
+    pub fn values<'a>(&'a self) -> &'a Vec<String> {
+        &self.values
+    }
 }
 
 impl PartialEq for MultiRecord {
